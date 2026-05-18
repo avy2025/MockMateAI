@@ -8,12 +8,12 @@ MockMate AI features a premium aesthetic with a **Dark Plum (#381932)** and **Li
 ## 🚀 Tech Stack
 - **Frontend**: React (Vite), CSS3, Fetch API
 - **Backend**: Node.js, Express, CORS
-- **AI Integration**: Mock Interview Logic (Ready for Google Gemini API integration)
+- **AI Integration**: Mock Interview Logic with automated answer evaluation (length-based)
 
 ## ✨ Features
 - **Dual Interview Tracks**: Practice specialized questions for HR and Technical roles.
 - **Contextual Chat**: A stateful chat system that remembers where you are in the interview.
-- **Real-time Feedback**: Sequential mock logic that simulates a real conversation.
+- **Real-time Feedback**: Sequential mock logic that evaluates answer depth and requests elaboration if responses are too brief.
 - **Premium UI**: Smooth transitions, rounded chat bubbles, and a professional layout.
 
 ## 🛠️ Getting Started
