@@ -6,6 +6,39 @@ const Chat = ({ interviewType, onBack }) => {
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef(null);
 
+  // Evaluation Card Component
+  const EvaluationCard = ({ evaluation }) => {
+    if (!evaluation) return null;
+    return (
+      <div className="evaluation-card scale-in" style={styles.evalCard}>
+        <div style={styles.evalHeader}>
+          <span className="score-badge">Score: {evaluation.score}/10</span>
+          <h4 style={{margin: 0, color: '#381932'}}>Performance Feedback</h4>
+        </div>
+        
+        <div style={styles.evalGrid}>
+          <div style={styles.evalSection}>
+            <strong style={styles.evalTitle}>⭐ Strengths</strong>
+            <ul style={styles.evalList}>
+              {evaluation.strengths?.map((s, i) => <li key={i}>{s}</li>)}
+            </ul>
+          </div>
+          <div style={styles.evalSection}>
+            <strong style={styles.evalTitle}>🚩 Weaknesses</strong>
+            <ul style={styles.evalList}>
+              {evaluation.weaknesses?.map((w, i) => <li key={i}>{w}</li>)}
+            </ul>
+          </div>
+        </div>
+        
+        <div style={{marginTop: '12px', borderTop: '1px solid rgba(56, 25, 50, 0.1)', paddingTop: '10px'}}>
+          <strong style={styles.evalTitle}>💡 Improvements</strong>
+          <p style={{fontSize: '0.9rem', marginTop: '5px'}}>{evaluation.improvements?.join(', ')}</p>
+        </div>
+      </div>
+    );
+  };
+
   // Auto scroll to bottom
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -24,7 +57,7 @@ const Chat = ({ interviewType, onBack }) => {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
-            message: '', 
+            message: 'Hello, please start the interview.', 
             history: [], 
             interviewType 
           }),
@@ -46,8 +79,8 @@ const Chat = ({ interviewType, onBack }) => {
     if (!input.trim() || isLoading) return;
 
     const userMessage = { role: 'user', content: input };
-    const newMessages = [...messages, userMessage];
-    setMessages(newMessages);
+    const historyForBackend = [...messages, userMessage];
+    setMessages(historyForBackend);
     setInput('');
     setIsLoading(true);
 
@@ -57,15 +90,24 @@ const Chat = ({ interviewType, onBack }) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           message: input, 
-          history: newMessages, 
+          history: historyForBackend, 
           interviewType 
         }),
       });
       const data = await response.json();
-      setMessages([...newMessages, { role: 'model', content: data.reply }]);
+      
+      // Update the user's message in state with the evaluation received from backend
+      const updatedMessages = historyForBackend.map((msg, idx) => {
+        if (idx === historyForBackend.length - 1) {
+          return { ...msg, evaluation: data.evaluation };
+        }
+        return msg;
+      });
+
+      setMessages([...updatedMessages, { role: 'model', content: data.reply }]);
     } catch (error) {
       console.error('Chat error:', error);
-      setMessages([...newMessages, { role: 'model', content: "Lost connection. Please check your server." }]);
+      setMessages([...historyForBackend, { role: 'model', content: "Lost connection. Please check your server." }]);
     } finally {
       setIsLoading(false);
     }
@@ -79,30 +121,39 @@ const Chat = ({ interviewType, onBack }) => {
           <h2 style={styles.headerTitle}>{interviewType} Interview</h2>
           <div style={styles.status}><span style={styles.statusDot}></span> Live Session</div>
         </div>
-        <div style={{width: '60px'}}></div> {/* Spacer for symmetry */}
+        <div style={{width: '60px'}}></div>
       </header>
 
       <div style={styles.messageBox}>
         {messages.map((msg, idx) => (
-          <div 
-            key={idx} 
-            style={{
-              ...styles.messageWrapper,
-              justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start'
-            }}
-          >
-            <div style={{
-              ...styles.bubble,
-              ...(msg.role === 'user' ? styles.userBubble : styles.aiBubble)
-            }}>
-              {msg.content}
+          <React.Fragment key={idx}>
+            <div 
+              style={{
+                ...styles.messageWrapper,
+                justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start'
+              }}
+            >
+              <div 
+                className={msg.role === 'user' ? 'slide-in-right' : 'slide-in-left'}
+                style={{
+                  ...styles.bubble,
+                  ...(msg.role === 'user' ? styles.userBubble : styles.aiBubble)
+                }}
+              >
+                {msg.content}
+              </div>
             </div>
-          </div>
+            {msg.role === 'user' && msg.evaluation && (
+              <div style={{ padding: '0 20px', marginBottom: '10px' }}>
+                <EvaluationCard evaluation={msg.evaluation} />
+              </div>
+            )}
+          </React.Fragment>
         ))}
         {isLoading && (
           <div style={{...styles.messageWrapper, justifyContent: 'flex-start'}}>
             <div style={{...styles.bubble, ...styles.aiBubble, opacity: 0.7}}>
-              Thinking...
+              <span className="typing-indicator">Interviewer is thinking...</span>
             </div>
           </div>
         )}
@@ -242,6 +293,40 @@ const styles = {
     alignItems: 'center',
     justifyContent: 'center',
     color: '#666',
+  },
+  evalCard: {
+    padding: '20px',
+    border: '1px solid rgba(56, 25, 50, 0.1)',
+  },
+  evalHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    marginBottom: '15px',
+  },
+  evalGrid: {
+    display: 'grid',
+    gridTemplateColumns: '1fr 1fr',
+    gap: '15px',
+  },
+  evalSection: {
+    backgroundColor: '#fff',
+    padding: '10px',
+    borderRadius: '8px',
+  },
+  evalTitle: {
+    fontSize: '0.85rem',
+    textTransform: 'uppercase',
+    letterSpacing: '0.5px',
+    color: '#666',
+    display: 'block',
+    marginBottom: '5px',
+  },
+  evalList: {
+    margin: 0,
+    paddingLeft: '18px',
+    fontSize: '0.85rem',
+    lineHeight: '1.4',
   }
 };
 
