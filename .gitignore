@@ -5,5 +5,6 @@ dist/
 *.log
 frontend/node_modules/
 backend/node_modules/
+backend/uploads/
 C:/Users/admin/.gemini/antigravity/brain/
 C:/Users/admin/.gemini/antigravity/
