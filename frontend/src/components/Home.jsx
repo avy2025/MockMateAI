@@ -11,7 +11,9 @@ const Home = ({ onStartInterview }) => {
       <main style={styles.main}>
         <div style={styles.card}>
           <h2 style={styles.cardTitle}>Ready to practice?</h2>
-          <p style={styles.cardText}>Choose an interview type to begin your mock session.</p>
+          <p style={styles.cardText}>
+            Choose an interview type, then upload your resume before the session begins.
+          </p>
           
           <div style={styles.buttonGroup}>
             <button 

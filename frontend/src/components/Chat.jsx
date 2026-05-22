@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 
-const Chat = ({ interviewType, onBack }) => {
+const Chat = ({ interviewType, resumeFilename, onBack }) => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -119,6 +119,9 @@ const Chat = ({ interviewType, onBack }) => {
         <button onClick={onBack} style={styles.backBtn}>← Back</button>
         <div style={styles.headerInfo}>
           <h2 style={styles.headerTitle}>{interviewType} Interview</h2>
+          {resumeFilename && (
+            <p style={styles.resumeHint}>Resume: {resumeFilename}</p>
+          )}
           <div style={styles.status}><span style={styles.statusDot}></span> Live Session</div>
         </div>
         <div style={{width: '60px'}}></div>
@@ -215,6 +218,11 @@ const styles = {
     fontSize: '1.2rem',
     margin: 0,
     color: '#381932',
+  },
+  resumeHint: {
+    fontSize: '0.75rem',
+    color: '#8a7085',
+    margin: '4px 0 0',
   },
   status: {
     fontSize: '0.8rem',
