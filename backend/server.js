@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const chatRoutes = require('./routes/chat');
+const uploadRoutes = require('./routes/upload');
 
 dotenv.config();
 
@@ -13,6 +14,7 @@ app.use(express.json());
 
 // Routes
 app.use('/api/chat', chatRoutes);
+app.use('/api/upload-resume', uploadRoutes);
 
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', service: 'MockMate AI Backend' });
