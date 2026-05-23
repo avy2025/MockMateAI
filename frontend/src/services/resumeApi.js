@@ -3,7 +3,7 @@ const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 /**
  * Upload a resume file to the server.
  * @param {File} file - PDF or DOCX resume
- * @returns {Promise<{ success: boolean, filename?: string, message?: string }>}
+ * @returns {Promise<{ success: boolean, filename?: string, extractedText?: string, message?: string }>}
  */
 export async function uploadResume(file) {
   const formData = new FormData();

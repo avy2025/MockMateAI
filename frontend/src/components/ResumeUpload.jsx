@@ -6,6 +6,8 @@ const ResumeUpload = ({ interviewType, onUploadSuccess, onBack }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [uploadState, setUploadState] = useState('idle'); // idle | uploading | success | error
   const [uploadedFilename, setUploadedFilename] = useState('');
+  const [extractedText, setExtractedText] = useState('');
+  const [previewOpen, setPreviewOpen] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
   const fileInputRef = useRef(null);
 
@@ -95,6 +97,8 @@ const ResumeUpload = ({ interviewType, onUploadSuccess, onBack }) => {
     setFile(null);
     setUploadState('idle');
     setUploadedFilename('');
+    setExtractedText('');
+    setPreviewOpen(true);
     setErrorMessage('');
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
@@ -249,11 +253,33 @@ const ResumeUpload = ({ interviewType, onUploadSuccess, onBack }) => {
                   />
                 </svg>
               </div>
-              <h3 style={styles.successTitle}>Resume Uploaded!</h3>
+              <h3 style={styles.successTitle}>Resume analyzed successfully</h3>
               <div style={styles.successFileInfo}>
                 <span>{getFileIcon(uploadedFilename)}</span>
                 <span style={styles.successFileName}>{uploadedFilename}</span>
               </div>
+
+              {extractedText && (
+                <div style={styles.textPreviewSection}>
+                  <button
+                    type="button"
+                    onClick={() => setPreviewOpen((open) => !open)}
+                    style={styles.previewToggle}
+                    aria-expanded={previewOpen}
+                  >
+                    <span style={styles.previewToggleLabel}>
+                      Extracted resume text
+                    </span>
+                    <span style={styles.previewChevron}>
+                      {previewOpen ? '▾' : '▸'}
+                    </span>
+                  </button>
+                  {previewOpen && (
+                    <pre style={styles.textPreview}>{extractedText}</pre>
+                  )}
+                </div>
+              )}
+
               <button
                 onClick={handleRemoveFile}
                 style={styles.changeFileBtn}
@@ -281,7 +307,7 @@ const ResumeUpload = ({ interviewType, onUploadSuccess, onBack }) => {
                 {uploadState === 'uploading' ? (
                   <span style={styles.loadingContent}>
                     <span style={styles.spinner}></span>
-                    Uploading...
+                    Analyzing resume...
                   </span>
                 ) : (
                   'Upload Resume'
@@ -585,6 +611,51 @@ const styles = {
     cursor: 'pointer',
     textDecoration: 'underline',
     padding: '4px',
+  },
+  textPreviewSection: {
+    width: '100%',
+    marginTop: '8px',
+    textAlign: 'left',
+  },
+  previewToggle: {
+    width: '100%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: '12px',
+    padding: '12px 14px',
+    backgroundColor: 'rgba(56, 25, 50, 0.05)',
+    border: '1px solid rgba(56, 25, 50, 0.08)',
+    borderRadius: '12px',
+    cursor: 'pointer',
+    color: '#381932',
+    fontSize: '0.9rem',
+    fontWeight: '600',
+    transition: 'background-color 0.2s ease',
+  },
+  previewToggleLabel: {
+    flex: 1,
+    textAlign: 'left',
+  },
+  previewChevron: {
+    fontSize: '0.85rem',
+    color: '#8a7085',
+  },
+  textPreview: {
+    margin: '10px 0 0',
+    padding: '14px 16px',
+    maxHeight: '220px',
+    overflowY: 'auto',
+    backgroundColor: '#FFF9F2',
+    border: '1px solid rgba(56, 25, 50, 0.08)',
+    borderRadius: '12px',
+    fontFamily: 'inherit',
+    fontSize: '0.8rem',
+    lineHeight: '1.55',
+    color: '#4a3a45',
+    whiteSpace: 'pre-wrap',
+    wordBreak: 'break-word',
+    textAlign: 'left',
   },
 
   // Action Buttons
