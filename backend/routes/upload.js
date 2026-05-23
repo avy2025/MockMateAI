@@ -3,6 +3,9 @@ const fs = require('fs');
 const multer = require('multer');
 const { resumeUpload } = require('../middleware/resumeMulter');
 const { extractResumeText } = require('../utils/resumeExtractor');
+const { chunkResumeText } = require('../utils/resumeChunker');
+const { createResumeSession } = require('../services/resumeSessionStore');
+const { generateResumeInsights } = require('../services/resumeInsights');
 
 const router = express.Router();
 
@@ -53,10 +56,22 @@ router.post('/', resumeUpload.single('resume'), async (req, res) => {
       });
     }
 
+    const chunks = chunkResumeText(extractedText);
+    const insights = await generateResumeInsights(extractedText, chunks);
+    const sessionId = createResumeSession({
+      filename: req.file.originalname,
+      extractedText,
+      chunks,
+      insights,
+    });
+
     res.json({
       success: true,
       filename: req.file.originalname,
       extractedText,
+      sessionId,
+      chunks,
+      insights,
     });
   } catch (error) {
     removeUploadedFile(filePath);
