@@ -1,5 +1,6 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { uploadResume } from '../services/resumeApi';
+import ResumeContextDashboard from './ResumeContextDashboard';
 
 const ResumeUpload = ({ interviewType, onUploadSuccess, onBack }) => {
   const [file, setFile] = useState(null);
@@ -7,7 +8,10 @@ const ResumeUpload = ({ interviewType, onUploadSuccess, onBack }) => {
   const [uploadState, setUploadState] = useState('idle'); // idle | uploading | success | error
   const [uploadedFilename, setUploadedFilename] = useState('');
   const [extractedText, setExtractedText] = useState('');
-  const [previewOpen, setPreviewOpen] = useState(true);
+  const [sessionId, setSessionId] = useState('');
+  const [chunks, setChunks] = useState([]);
+  const [insights, setInsights] = useState(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const fileInputRef = useRef(null);
 
@@ -82,7 +86,12 @@ const ResumeUpload = ({ interviewType, onUploadSuccess, onBack }) => {
 
       if (data.success) {
         setUploadState('success');
-        setUploadedFilename(data.filename);
+        setUploadedFilename(data.filename || file.name);
+        setExtractedText(data.extractedText || '');
+        setSessionId(data.sessionId || '');
+        setChunks(data.chunks || []);
+        setInsights(data.insights || null);
+        setPreviewOpen(false);
       } else {
         setUploadState('error');
         setErrorMessage(data.message || 'Upload failed.');
@@ -98,7 +107,10 @@ const ResumeUpload = ({ interviewType, onUploadSuccess, onBack }) => {
     setUploadState('idle');
     setUploadedFilename('');
     setExtractedText('');
-    setPreviewOpen(true);
+    setSessionId('');
+    setChunks([]);
+    setInsights(null);
+    setPreviewOpen(false);
     setErrorMessage('');
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
@@ -259,6 +271,10 @@ const ResumeUpload = ({ interviewType, onUploadSuccess, onBack }) => {
                 <span style={styles.successFileName}>{uploadedFilename}</span>
               </div>
 
+              {(chunks.length > 0 || insights) && (
+                <ResumeContextDashboard chunks={chunks} insights={insights} />
+              )}
+
               {extractedText && (
                 <div style={styles.textPreviewSection}>
                   <button
@@ -318,7 +334,15 @@ const ResumeUpload = ({ interviewType, onUploadSuccess, onBack }) => {
             <button
               id="start-interview-btn"
               className="primary-btn"
-              onClick={() => onUploadSuccess(uploadedFilename)}
+              onClick={() =>
+                onUploadSuccess({
+                  filename: uploadedFilename,
+                  sessionId,
+                  chunks,
+                  insights,
+                  extractedText,
+                })
+              }
               disabled={uploadState !== 'success'}
               style={{
                 ...styles.startInterviewBtn,
@@ -407,7 +431,7 @@ const styles = {
   },
   main: {
     width: '100%',
-    maxWidth: '520px',
+    maxWidth: '720px',
   },
   card: {
     backgroundColor: '#FFFFFF',

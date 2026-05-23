@@ -7,15 +7,18 @@ function App() {
   const [screen, setScreen] = useState('home'); // 'home' | 'resume' | 'chat'
   const [interviewType, setInterviewType] = useState(null);
   const [resumeFilename, setResumeFilename] = useState(null);
+  const [resumeContext, setResumeContext] = useState(null);
 
   const selectInterviewType = (type) => {
     setInterviewType(type);
     setResumeFilename(null);
+    setResumeContext(null);
     setScreen('resume');
   };
 
-  const handleResumeUploaded = (filename) => {
-    setResumeFilename(filename);
+  const handleResumeUploaded = (context) => {
+    setResumeFilename(context.filename);
+    setResumeContext(context);
     setScreen('chat');
   };
 
@@ -23,12 +26,14 @@ function App() {
     setScreen('home');
     setInterviewType(null);
     setResumeFilename(null);
+    setResumeContext(null);
   };
 
   const goBackToHome = () => {
     setScreen('home');
     setInterviewType(null);
     setResumeFilename(null);
+    setResumeContext(null);
   };
 
   return (
@@ -47,6 +52,7 @@ function App() {
         <Chat
           interviewType={interviewType}
           resumeFilename={resumeFilename}
+          resumeContext={resumeContext}
           onBack={goHome}
         />
       )}
