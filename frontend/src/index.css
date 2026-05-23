@@ -64,6 +64,22 @@ button {
   background-color: rgba(56, 25, 50, 0.05);
 }
 
+.resume-context-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+}
+
+@media (max-width: 640px) {
+  .resume-context-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .resume-context-grid .resume-context-card-wide {
+    grid-column: 1;
+  }
+}
+
 /* Animations */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(10px); }
