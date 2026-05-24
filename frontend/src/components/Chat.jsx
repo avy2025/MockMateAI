@@ -1,78 +1,103 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { sendChatMessage } from '../services/chatApi';
 
-const Chat = ({ interviewType, resumeFilename, onBack }) => {
+const EvaluationCard = ({ evaluation }) => {
+  if (!evaluation) return null;
+  return (
+    <div className="evaluation-card scale-in" style={styles.evalCard}>
+      <div style={styles.evalHeader}>
+        <span className="score-badge">Score: {evaluation.score}/10</span>
+        <h4 style={{ margin: 0, color: '#381932' }}>Performance Feedback</h4>
+      </div>
+
+      <div style={styles.evalGrid}>
+        <div style={styles.evalSection}>
+          <strong style={styles.evalTitle}>⭐ Strengths</strong>
+          <ul style={styles.evalList}>
+            {evaluation.strengths?.map((s, i) => (
+              <li key={i}>{s}</li>
+            ))}
+          </ul>
+        </div>
+        <div style={styles.evalSection}>
+          <strong style={styles.evalTitle}>🚩 Weaknesses</strong>
+          <ul style={styles.evalList}>
+            {evaluation.weaknesses?.map((w, i) => (
+              <li key={i}>{w}</li>
+            ))}
+          </ul>
+        </div>
+      </div>
+
+      <div
+        style={{
+          marginTop: '12px',
+          borderTop: '1px solid rgba(56, 25, 50, 0.1)',
+          paddingTop: '10px',
+        }}
+      >
+        <strong style={styles.evalTitle}>💡 Improvements</strong>
+        <p style={{ fontSize: '0.9rem', marginTop: '5px' }}>
+          {evaluation.improvements?.join(', ')}
+        </p>
+      </div>
+    </div>
+  );
+};
+
+function buildFocusTags(resumeContext) {
+  if (!resumeContext?.insights) return [];
+
+  const { topSkills = [], focusAreas = [] } = resumeContext.insights;
+  const tags = [...topSkills.slice(0, 6), ...focusAreas.slice(0, 3)];
+
+  return [...new Set(tags.map((t) => t.trim()).filter(Boolean))].slice(0, 8);
+}
+
+const Chat = ({ interviewType, resumeFilename, resumeContext, onBack }) => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef(null);
 
-  // Evaluation Card Component
-  const EvaluationCard = ({ evaluation }) => {
-    if (!evaluation) return null;
-    return (
-      <div className="evaluation-card scale-in" style={styles.evalCard}>
-        <div style={styles.evalHeader}>
-          <span className="score-badge">Score: {evaluation.score}/10</span>
-          <h4 style={{margin: 0, color: '#381932'}}>Performance Feedback</h4>
-        </div>
-        
-        <div style={styles.evalGrid}>
-          <div style={styles.evalSection}>
-            <strong style={styles.evalTitle}>⭐ Strengths</strong>
-            <ul style={styles.evalList}>
-              {evaluation.strengths?.map((s, i) => <li key={i}>{s}</li>)}
-            </ul>
-          </div>
-          <div style={styles.evalSection}>
-            <strong style={styles.evalTitle}>🚩 Weaknesses</strong>
-            <ul style={styles.evalList}>
-              {evaluation.weaknesses?.map((w, i) => <li key={i}>{w}</li>)}
-            </ul>
-          </div>
-        </div>
-        
-        <div style={{marginTop: '12px', borderTop: '1px solid rgba(56, 25, 50, 0.1)', paddingTop: '10px'}}>
-          <strong style={styles.evalTitle}>💡 Improvements</strong>
-          <p style={{fontSize: '0.9rem', marginTop: '5px'}}>{evaluation.improvements?.join(', ')}</p>
-        </div>
-      </div>
-    );
-  };
+  const sessionId = resumeContext?.sessionId;
+  const isPersonalized = Boolean(sessionId);
+  const focusTags = useMemo(() => buildFocusTags(resumeContext), [resumeContext]);
 
-  // Auto scroll to bottom
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   useEffect(() => {
     scrollToBottom();
   }, [messages, isLoading]);
 
-  // Start interview with first AI message
   useEffect(() => {
     const startChat = async () => {
       setIsLoading(true);
       try {
-        const response = await fetch('http://localhost:5000/api/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            message: 'Hello, please start the interview.', 
-            history: [], 
-            interviewType 
-          }),
+        const data = await sendChatMessage({
+          message: 'Hello, please start the interview.',
+          history: [],
+          interviewType,
+          sessionId,
         });
-        const data = await response.json();
         setMessages([{ role: 'model', content: data.reply }]);
       } catch (error) {
         console.error('Failed to start interview:', error);
-        setMessages([{ role: 'model', content: "Sorry, I'm having trouble connecting. Is the backend server running?" }]);
+        setMessages([
+          {
+            role: 'model',
+            content:
+              "Sorry, I'm having trouble connecting. Is the backend server running?",
+          },
+        ]);
       } finally {
         setIsLoading(false);
       }
     };
     startChat();
-  }, [interviewType]);
+  }, [interviewType, sessionId]);
 
   const handleSend = async (e) => {
     e.preventDefault();
@@ -85,18 +110,13 @@ const Chat = ({ interviewType, resumeFilename, onBack }) => {
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://localhost:5000/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          message: input, 
-          history: historyForBackend, 
-          interviewType 
-        }),
+      const data = await sendChatMessage({
+        message: input,
+        history: historyForBackend,
+        interviewType,
+        sessionId,
       });
-      const data = await response.json();
-      
-      // Update the user's message in state with the evaluation received from backend
+
       const updatedMessages = historyForBackend.map((msg, idx) => {
         if (idx === historyForBackend.length - 1) {
           return { ...msg, evaluation: data.evaluation };
@@ -107,7 +127,10 @@ const Chat = ({ interviewType, resumeFilename, onBack }) => {
       setMessages([...updatedMessages, { role: 'model', content: data.reply }]);
     } catch (error) {
       console.error('Chat error:', error);
-      setMessages([...historyForBackend, { role: 'model', content: "Lost connection. Please check your server." }]);
+      setMessages([
+        ...historyForBackend,
+        { role: 'model', content: 'Lost connection. Please check your server.' },
+      ]);
     } finally {
       setIsLoading(false);
     }
@@ -116,31 +139,52 @@ const Chat = ({ interviewType, resumeFilename, onBack }) => {
   return (
     <div className="chat-container fade-in" style={styles.container}>
       <header style={styles.header}>
-        <button onClick={onBack} style={styles.backBtn}>← Back</button>
+        <button onClick={onBack} style={styles.backBtn}>
+          ← Back
+        </button>
         <div style={styles.headerInfo}>
           <h2 style={styles.headerTitle}>{interviewType} Interview</h2>
           {resumeFilename && (
             <p style={styles.resumeHint}>Resume: {resumeFilename}</p>
           )}
-          <div style={styles.status}><span style={styles.statusDot}></span> Live Session</div>
+          {isPersonalized && (
+            <div style={styles.personalizedBadge}>
+              <span style={styles.personalizedDot}></span>
+              Personalized Interview Active
+            </div>
+          )}
+          {!isPersonalized && (
+            <div style={styles.status}>
+              <span style={styles.statusDot}></span> Live Session
+            </div>
+          )}
+          {isPersonalized && focusTags.length > 0 && (
+            <div style={styles.focusTags}>
+              {focusTags.map((tag) => (
+                <span key={tag} className="focus-tag" style={styles.focusTag}>
+                  {tag}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
-        <div style={{width: '60px'}}></div>
+        <div style={{ width: '60px' }}></div>
       </header>
 
       <div style={styles.messageBox}>
         {messages.map((msg, idx) => (
           <React.Fragment key={idx}>
-            <div 
+            <div
               style={{
                 ...styles.messageWrapper,
-                justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start'
+                justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start',
               }}
             >
-              <div 
+              <div
                 className={msg.role === 'user' ? 'slide-in-right' : 'slide-in-left'}
                 style={{
                   ...styles.bubble,
-                  ...(msg.role === 'user' ? styles.userBubble : styles.aiBubble)
+                  ...(msg.role === 'user' ? styles.userBubble : styles.aiBubble),
                 }}
               >
                 {msg.content}
@@ -154,8 +198,8 @@ const Chat = ({ interviewType, resumeFilename, onBack }) => {
           </React.Fragment>
         ))}
         {isLoading && (
-          <div style={{...styles.messageWrapper, justifyContent: 'flex-start'}}>
-            <div style={{...styles.bubble, ...styles.aiBubble, opacity: 0.7}}>
+          <div style={{ ...styles.messageWrapper, justifyContent: 'flex-start' }}>
+            <div style={{ ...styles.bubble, ...styles.aiBubble, opacity: 0.7 }}>
               <span className="typing-indicator">Interviewer is thinking...</span>
             </div>
           </div>
@@ -164,15 +208,20 @@ const Chat = ({ interviewType, resumeFilename, onBack }) => {
       </div>
 
       <form onSubmit={handleSend} style={styles.inputArea}>
-        <input 
-          type="text" 
+        <input
+          type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Type your answer..."
           style={styles.input}
           disabled={isLoading}
         />
-        <button type="submit" className="primary-btn" style={styles.sendBtn} disabled={isLoading}>
+        <button
+          type="submit"
+          className="primary-btn"
+          style={styles.sendBtn}
+          disabled={isLoading}
+        >
           Send
         </button>
         <button type="button" style={styles.micBtn} title="Voice integration coming soon">
@@ -213,6 +262,8 @@ const styles = {
   },
   headerInfo: {
     textAlign: 'center',
+    flex: 1,
+    minWidth: 0,
   },
   headerTitle: {
     fontSize: '1.2rem',
@@ -223,6 +274,23 @@ const styles = {
     fontSize: '0.75rem',
     color: '#8a7085',
     margin: '4px 0 0',
+  },
+  personalizedBadge: {
+    fontSize: '0.8rem',
+    color: '#5b2d6e',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '6px',
+    marginTop: '6px',
+    fontWeight: '600',
+  },
+  personalizedDot: {
+    width: '8px',
+    height: '8px',
+    backgroundColor: '#7c3aed',
+    borderRadius: '50%',
+    display: 'inline-block',
   },
   status: {
     fontSize: '0.8rem',
@@ -239,6 +307,24 @@ const styles = {
     backgroundColor: '#28a745',
     borderRadius: '50%',
     display: 'inline-block',
+  },
+  focusTags: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: '6px',
+    marginTop: '10px',
+    padding: '0 8px',
+  },
+  focusTag: {
+    fontSize: '0.72rem',
+    padding: '4px 10px',
+    borderRadius: '999px',
+    backgroundColor: 'rgba(124, 58, 237, 0.12)',
+    color: '#5b2d6e',
+    border: '1px solid rgba(124, 58, 237, 0.25)',
+    fontWeight: '500',
+    whiteSpace: 'nowrap',
   },
   messageBox: {
     flex: 1,
@@ -258,7 +344,7 @@ const styles = {
     borderRadius: '18px',
     lineHeight: '1.5',
     fontSize: '1rem',
-    boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
+    boxShadow: '0 2px 10px rgba(0, 0, 0, 0.05)',
   },
   aiBubble: {
     backgroundColor: '#FFFFFF',
@@ -335,7 +421,7 @@ const styles = {
     paddingLeft: '18px',
     fontSize: '0.85rem',
     lineHeight: '1.4',
-  }
+  },
 };
 
 export default Chat;
