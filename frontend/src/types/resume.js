@@ -1,4 +1,5 @@
 /**
+ * Resume section chunk (embeddings are stored server-side only).
  * @typedef {{ type: string, content: string }} ResumeChunk
  */
 
