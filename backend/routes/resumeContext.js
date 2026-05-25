@@ -1,5 +1,6 @@
 const express = require('express');
 const { getResumeSession } = require('../services/resumeSessionStore');
+const { stripEmbeddingsFromChunks } = require('../services/resumeEmbeddings');
 
 const router = express.Router();
 
@@ -18,7 +19,7 @@ router.get('/:sessionId', (req, res) => {
     success: true,
     sessionId: req.params.sessionId,
     filename: session.filename,
-    chunks: session.chunks,
+    chunks: stripEmbeddingsFromChunks(session.chunks),
     insights: session.insights,
     extractedText: session.extractedText,
   });

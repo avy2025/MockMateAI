@@ -111,13 +111,19 @@ router.post('/', async (req, res) => {
           .join('\n')
       : '';
 
+    const isStart =
+      !history?.length ||
+      message === 'Hello, please start the interview.';
+
     let resumeContextBlock = null;
     if (sessionId) {
       const session = getResumeSession(sessionId);
       if (session?.chunks?.length) {
-        const relevantChunks = retrieveRelevantChunks(session.chunks, {
+        const relevantChunks = await retrieveRelevantChunks(session.chunks, {
           message,
           history,
+          insights: session.insights,
+          isStart,
         });
         resumeContextBlock = formatResumeContext(
           relevantChunks,
@@ -125,10 +131,6 @@ router.post('/', async (req, res) => {
         );
       }
     }
-
-    const isStart =
-      !history?.length ||
-      message === 'Hello, please start the interview.';
 
     const prompt = buildInterviewPrompt({
       interviewType,

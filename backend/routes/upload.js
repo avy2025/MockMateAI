@@ -6,6 +6,10 @@ const { extractResumeText } = require('../utils/resumeExtractor');
 const { chunkResumeText } = require('../utils/resumeChunker');
 const { createResumeSession } = require('../services/resumeSessionStore');
 const { generateResumeInsights } = require('../services/resumeInsights');
+const {
+  generateEmbeddings,
+  stripEmbeddingsFromChunks,
+} = require('../services/resumeEmbeddings');
 
 const router = express.Router();
 
@@ -57,11 +61,14 @@ router.post('/', resumeUpload.single('resume'), async (req, res) => {
     }
 
     const chunks = chunkResumeText(extractedText);
-    const insights = await generateResumeInsights(extractedText, chunks);
+    const [embeddedChunks, insights] = await Promise.all([
+      generateEmbeddings(chunks),
+      generateResumeInsights(extractedText, chunks),
+    ]);
     const sessionId = createResumeSession({
       filename: req.file.originalname,
       extractedText,
-      chunks,
+      chunks: embeddedChunks,
       insights,
     });
 
@@ -70,7 +77,7 @@ router.post('/', resumeUpload.single('resume'), async (req, res) => {
       filename: req.file.originalname,
       extractedText,
       sessionId,
-      chunks,
+      chunks: stripEmbeddingsFromChunks(embeddedChunks),
       insights,
     });
   } catch (error) {
