@@ -105,7 +105,7 @@ function splitSectionItems(body) {
 }
 
 /**
- * Split resume text into meaningful typed chunks for lightweight RAG.
+ * Split resume text into meaningful typed chunks for semantic RAG retrieval.
  * @param {string} text - Normalized resume text
  * @returns {{ type: string, content: string }[]}
  */

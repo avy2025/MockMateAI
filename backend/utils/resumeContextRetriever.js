@@ -1,15 +1,23 @@
-const PRIORITY_TYPES = ['project', 'skills', 'experience', 'certifications', 'education'];
+const vectorStore = require('../services/vectorStore');
+const { embedQuery } = require('../services/resumeEmbeddings');
+
+const PRIORITY_TYPES = [
+  'project',
+  'skills',
+  'experience',
+  'certifications',
+  'education',
+];
 
 const MAX_CONTEXT_CHARS = 6000;
+const SEMANTIC_TOP_K = 12;
 
 /**
- * Score and select resume chunks relevant to the current interview turn.
- * Prioritizes projects, skills, experience, and certifications.
+ * Keyword + section-priority fallback when embeddings are unavailable.
  * @param {{ type: string, content: string }[]} chunks
  * @param {{ message?: string, history?: { role: string, content: string }[] }} options
- * @returns {{ type: string, content: string }[]}
  */
-function retrieveRelevantChunks(chunks, { message = '', history = [] } = {}) {
+function retrieveRelevantChunksKeyword(chunks, { message = '', history = [] } = {}) {
   if (!chunks || chunks.length === 0) return [];
 
   const conversationText = [message, ...(history || []).map((h) => h.content)]
@@ -35,11 +43,17 @@ function retrieveRelevantChunks(chunks, { message = '', history = [] } = {}) {
   });
 
   scored.sort((a, b) => a.score - b.score);
+  return selectChunksWithinCharBudget(scored.map((s) => s.chunk));
+}
 
+/**
+ * @param {{ type: string, content: string }[]} chunks
+ */
+function selectChunksWithinCharBudget(chunks) {
   const selected = [];
   let totalChars = 0;
 
-  for (const { chunk } of scored) {
+  for (const chunk of chunks) {
     const section = `[${chunk.type.toUpperCase()}]\n${chunk.content}\n`;
     if (totalChars + section.length > MAX_CONTEXT_CHARS && selected.length > 0) {
       break;
@@ -49,6 +63,71 @@ function retrieveRelevantChunks(chunks, { message = '', history = [] } = {}) {
   }
 
   return selected;
+}
+
+/**
+ * Build text to embed for the current interview turn.
+ */
+function buildRetrievalQuery({
+  message = '',
+  history = [],
+  insights,
+  isStart = false,
+} = {}) {
+  if (isStart && insights) {
+    const parts = [
+      insights.strongestProject,
+      ...(insights.topSkills || []),
+      ...(insights.focusAreas || []),
+    ].filter(Boolean);
+    if (parts.length) return parts.join('. ');
+  }
+
+  const recent = (history || []).slice(-4).map((h) => h.content);
+  return [message, ...recent].filter(Boolean).join('\n');
+}
+
+/**
+ * Semantic retrieval: embed the query, search chunk vectors, trim to context budget.
+ * Falls back to keyword scoring when embeddings are missing.
+ *
+ * @param {{ type: string, content: string, embedding?: number[] }[]} chunks
+ * @param {{
+ *   message?: string,
+ *   history?: { role: string, content: string }[],
+ *   insights?: object,
+ *   isStart?: boolean,
+ * }} options
+ * @returns {Promise<{ type: string, content: string }[]>}
+ */
+async function retrieveRelevantChunks(chunks, options = {}) {
+  if (!chunks?.length) return [];
+
+  const hasEmbeddings = chunks.some(
+    (c) => Array.isArray(c.embedding) && c.embedding.length > 0
+  );
+
+  if (!hasEmbeddings) {
+    return retrieveRelevantChunksKeyword(chunks, options);
+  }
+
+  const queryText = buildRetrievalQuery(options);
+  const queryEmbedding = await embedQuery(queryText);
+
+  if (!queryEmbedding) {
+    return retrieveRelevantChunksKeyword(chunks, options);
+  }
+
+  const hits = vectorStore.search(chunks, queryEmbedding, {
+    topK: SEMANTIC_TOP_K,
+  });
+
+  if (!hits.length) {
+    return retrieveRelevantChunksKeyword(chunks, options);
+  }
+
+  const ranked = hits.map((h) => h.chunk);
+  return selectChunksWithinCharBudget(ranked);
 }
 
 /**
@@ -108,6 +187,8 @@ function getInterviewFocusTags(insights) {
 
 module.exports = {
   retrieveRelevantChunks,
+  retrieveRelevantChunksKeyword,
   formatResumeContext,
   getInterviewFocusTags,
+  buildRetrievalQuery,
 };
