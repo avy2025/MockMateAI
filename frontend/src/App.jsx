@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import Home from './components/Home';
 import ResumeUpload from './components/ResumeUpload';
-import Chat from './components/Chat';
+import InterviewRoom from './components/interview-room/InterviewRoom';
 
 function App() {
-  const [screen, setScreen] = useState('home'); // 'home' | 'resume' | 'chat'
+  const [screen, setScreen] = useState('home'); // 'home' | 'resume' | 'interview'
   const [interviewType, setInterviewType] = useState(null);
   const [resumeFilename, setResumeFilename] = useState(null);
   const [resumeContext, setResumeContext] = useState(null);
@@ -19,7 +19,7 @@ function App() {
   const handleResumeUploaded = (context) => {
     setResumeFilename(context.filename);
     setResumeContext(context);
-    setScreen('chat');
+    setScreen('interview');
   };
 
   const goHome = () => {
@@ -48,12 +48,10 @@ function App() {
           onBack={goBackToHome}
         />
       )}
-      {screen === 'chat' && (
-        <Chat
+      {screen === 'interview' && (
+        <InterviewRoom
           interviewType={interviewType}
-          resumeFilename={resumeFilename}
-          resumeContext={resumeContext}
-          onBack={goHome}
+          onEndInterview={goHome}
         />
       )}
     </div>
