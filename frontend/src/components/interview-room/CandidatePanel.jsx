@@ -6,13 +6,14 @@ function CandidatePanel({
   status,
   error,
   onRetry,
+  isListening = false,
 }) {
   const showVideo = status === 'active' && cameraOn && !error;
   const isLoading = status === 'loading';
 
   return (
     <section
-      className="interview-panel interview-panel--candidate"
+      className={`interview-panel interview-panel--candidate ${isListening ? 'interview-panel--listening' : ''}`}
       aria-label="Candidate"
     >
       <div className="interview-panel__video-area interview-panel__video-area--candidate">
@@ -60,6 +61,13 @@ function CandidatePanel({
           muted
           aria-label="Your webcam preview"
         />
+
+        {isListening && (
+          <div className="candidate-listening-badge" aria-hidden="true">
+            <span className="candidate-listening-badge__dot" />
+            Listening
+          </div>
+        )}
       </div>
       <footer className="interview-panel__label">
         <span className="interview-panel__label-badge interview-panel__label-badge--you">
