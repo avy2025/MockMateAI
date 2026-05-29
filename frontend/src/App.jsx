@@ -51,6 +51,7 @@ function App() {
       {screen === 'interview' && (
         <InterviewRoom
           interviewType={interviewType}
+          resumeContext={resumeContext}
           onEndInterview={goHome}
         />
       )}
