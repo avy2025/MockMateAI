@@ -1,22 +1,15 @@
 import React from 'react';
 
-function MicIcon({ muted }) {
-  if (muted) {
-    return (
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path
-          fill="currentColor"
-          d="M12 14a3 3 0 0 0 3-3V5a3 3 0 1 0-6 0v6a3 3 0 0 0 3 3Zm7-3a1 1 0 1 0-2 0 5 5 0 0 1-10 0 1 1 0 1 0-2 0 7 7 0 0 0 6 6.92V19H9a1 1 0 1 0 0 2h6a1 1 0 1 0 0-2h-1v-1.08A7 7 0 0 0 19 11ZM4.29 3.29a1 1 0 0 0-1.42 1.42l16 16a1 1 0 0 0 1.42-1.42l-16-16Z"
-        />
-      </svg>
-    );
-  }
+function MicIcon({ active }) {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
       <path
         fill="currentColor"
         d="M12 14a3 3 0 0 0 3-3V5a3 3 0 1 0-6 0v6a3 3 0 0 0 3 3Zm7-3a1 1 0 1 0-2 0 5 5 0 0 1-10 0 1 1 0 1 0-2 0 7 7 0 0 0 6 6.92V19H9a1 1 0 1 0 0 2h6a1 1 0 1 0 0-2h-1v-1.08A7 7 0 0 0 19 11Z"
       />
+      {active && (
+        <circle cx="12" cy="12" r="11" fill="none" stroke="currentColor" strokeWidth="1.5" opacity="0.4" />
+      )}
     </svg>
   );
 }
@@ -42,19 +35,27 @@ function CameraIcon({ off }) {
   );
 }
 
-function ControlBar({ micOn, cameraOn, onToggleMic, onToggleCamera, onEndInterview }) {
+function ControlBar({
+  isListening,
+  cameraOn,
+  onToggleVoice,
+  onToggleCamera,
+  onEndInterview,
+  voiceDisabled = false,
+}) {
   return (
     <footer className="control-bar" role="toolbar" aria-label="Interview controls">
       <div className="control-bar__group">
         <button
           type="button"
-          className={`control-bar__btn ${!micOn ? 'control-bar__btn--off' : ''}`}
-          onClick={onToggleMic}
-          aria-pressed={!micOn}
-          aria-label={micOn ? 'Mute microphone' : 'Unmute microphone'}
+          className={`control-bar__btn control-bar__btn--voice ${isListening ? 'control-bar__btn--listening' : ''}`}
+          onClick={onToggleVoice}
+          disabled={voiceDisabled && !isListening}
+          aria-pressed={isListening}
+          aria-label={isListening ? 'Stop listening' : 'Start voice input'}
         >
-          <MicIcon muted={!micOn} />
-          <span>{micOn ? 'Mute' : 'Unmute'}</span>
+          <MicIcon active={isListening} />
+          <span>{isListening ? 'Listening' : 'Speak'}</span>
         </button>
 
         <button
