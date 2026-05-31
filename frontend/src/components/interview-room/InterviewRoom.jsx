@@ -10,7 +10,9 @@ import CandidatePanel from './CandidatePanel';
 import VoiceTranscriptPanel from './VoiceTranscriptPanel';
 import ControlBar from './ControlBar';
 import BehaviorSidebar from './BehaviorSidebar';
+import IntegritySidebar from './IntegritySidebar';
 import BehaviorAlertToast from './BehaviorAlertToast';
+import { useIntegrityMonitoring } from '../../hooks/useIntegrityMonitoring';
 import '../../styles/interview-room.css';
 import '../../styles/behavior-analysis.css';
 
@@ -25,6 +27,7 @@ function InterviewRoom({ interviewType, resumeContext, onEndInterview }) {
   const [currentQuestion, setCurrentQuestion] = useState('');
   const [voiceNotice, setVoiceNotice] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [integritySidebarOpen, setIntegritySidebarOpen] = useState(false);
 
   // Alert toast ref — wired between useBehaviorAnalysis and BehaviorAlertToast
   const alertToastRef = useRef(null);
@@ -47,6 +50,13 @@ function InterviewRoom({ interviewType, resumeContext, onEndInterview }) {
     isListening: false,
     isSpeaking,
     cameraOn,
+  });
+
+  // Integrity monitoring — tracks tab switches, focus, and multi-face signals
+  const { integrityMetrics, getIntegrityReport } = useIntegrityMonitoring({
+    isSpeaking,
+    isListening: false,
+    behaviorMetrics,
   });
 
   // Forward hook alerts → toast component
@@ -225,8 +235,20 @@ function InterviewRoom({ interviewType, resumeContext, onEndInterview }) {
     stopSpeaking();
     speech.stopListening();
     endSession();
+    
     const behaviorReport = getSessionReport();
-    onEndInterview(behaviorReport);
+    const integrityReport = getIntegrityReport();
+
+    // Combine for final report
+    const finalReport = {
+      ...behaviorReport,
+      integrityScore: integrityReport.integrityScore,
+      integrityEvents: integrityReport.events,
+      focusLossCount: integrityReport.focusLossCount,
+      timeAwayMs: integrityReport.timeAwayMs,
+    };
+
+    onEndInterview(finalReport);
   };
 
   const combinedError = voiceNotice || (!speech.isSupported && !ttsSupported
@@ -281,6 +303,14 @@ function InterviewRoom({ interviewType, resumeContext, onEndInterview }) {
         isOpen={sidebarOpen}
         onToggle={() => setSidebarOpen((prev) => !prev)}
         metrics={behaviorMetrics}
+        onSecretToggle={() => setIntegritySidebarOpen(true)}
+      />
+
+      {/* Integrity Monitoring Sidebar — Hidden/Developer/Recruiter view */}
+      <IntegritySidebar
+        isOpen={integritySidebarOpen}
+        onToggle={() => setIntegritySidebarOpen((prev) => !prev)}
+        metrics={integrityMetrics}
       />
     </div>
   );

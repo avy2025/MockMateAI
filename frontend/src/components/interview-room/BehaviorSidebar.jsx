@@ -120,7 +120,7 @@ function MetricCard({ icon, title, value, color, sub }) {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-function BehaviorSidebar({ isOpen, onToggle, metrics }) {
+function BehaviorSidebar({ isOpen, onToggle, metrics, onSecretToggle }) {
   const engagement = engagementLevel(metrics);
   const log = [...(metrics.sessionLog || [])].reverse().slice(0, 20);
 
@@ -131,6 +131,7 @@ function BehaviorSidebar({ isOpen, onToggle, metrics }) {
         id="behavior-sidebar-toggle"
         className={`behavior-tab ${isOpen ? 'behavior-tab--open' : ''}`}
         onClick={onToggle}
+        onDoubleClick={onSecretToggle}
         aria-label={isOpen ? 'Close Behavior Analysis' : 'Open Behavior Analysis'}
         aria-expanded={isOpen}
       >
@@ -158,7 +159,7 @@ function BehaviorSidebar({ isOpen, onToggle, metrics }) {
         aria-hidden={!isOpen}
       >
         {/* Header */}
-        <div className="bsb-header">
+        <div className="bsb-header" onDoubleClick={onSecretToggle}>
           <div className="bsb-header__title">
             <span aria-hidden="true">📊</span>
             Behavior Analysis
