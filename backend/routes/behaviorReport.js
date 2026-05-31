@@ -35,7 +35,7 @@ router.post('/', (req, res) => {
 
     console.log(
       `[BehaviorReport] Stored report for session "${key}" — ` +
-      `eyeContactScore=${stored.eyeContactScore}, events=${stored.sessionLog?.length ?? 0}`
+      `eyeContactScore=${stored.eyeContactScore}, integrityScore=${stored.integrityScore ?? 'N/A'}, events=${stored.sessionLog?.length ?? 0}`
     );
 
     return res.json({ ok: true, sessionId: key });
