@@ -2,13 +2,17 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useWebcam } from '../../hooks/useWebcam';
 import { useSpeechRecognition } from '../../hooks/useSpeechRecognition';
 import { useTextToSpeech } from '../../hooks/useTextToSpeech';
+import { useBehaviorAnalysis } from '../../hooks/useBehaviorAnalysis';
 import { sendChatMessage } from '../../services/chatApi';
 import InterviewHeader from './InterviewHeader';
 import AIInterviewerPanel from './AIInterviewerPanel';
 import CandidatePanel from './CandidatePanel';
 import VoiceTranscriptPanel from './VoiceTranscriptPanel';
 import ControlBar from './ControlBar';
+import BehaviorSidebar from './BehaviorSidebar';
+import BehaviorAlertToast from './BehaviorAlertToast';
 import '../../styles/interview-room.css';
+import '../../styles/behavior-analysis.css';
 
 function InterviewRoom({ interviewType, resumeContext, onEndInterview }) {
   const sessionId = resumeContext?.sessionId;
@@ -20,6 +24,10 @@ function InterviewRoom({ interviewType, resumeContext, onEndInterview }) {
   const [isLoading, setIsLoading] = useState(false);
   const [currentQuestion, setCurrentQuestion] = useState('');
   const [voiceNotice, setVoiceNotice] = useState(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Alert toast ref — wired between useBehaviorAnalysis and BehaviorAlertToast
+  const alertToastRef = useRef(null);
 
   const {
     videoRef,
@@ -32,6 +40,21 @@ function InterviewRoom({ interviewType, resumeContext, onEndInterview }) {
   } = useWebcam({ autoStart: true });
 
   const { speak, stop: stopSpeaking, isSpeaking, isSupported: ttsSupported } = useTextToSpeech();
+
+  // Behavioral analysis — runs on the live video feed
+  const { metrics: behaviorMetrics, onAlert, getSessionReport } = useBehaviorAnalysis({
+    videoRef,
+    isListening: false,
+    isSpeaking,
+    cameraOn,
+  });
+
+  // Forward hook alerts → toast component
+  useEffect(() => {
+    onAlert((alert) => {
+      alertToastRef.current?.(alert);
+    });
+  }, [onAlert]);
 
   const submitAnswer = useCallback(
     async (text) => {
@@ -202,7 +225,8 @@ function InterviewRoom({ interviewType, resumeContext, onEndInterview }) {
     stopSpeaking();
     speech.stopListening();
     endSession();
-    onEndInterview();
+    const behaviorReport = getSessionReport();
+    onEndInterview(behaviorReport);
   };
 
   const combinedError = voiceNotice || (!speech.isSupported && !ttsSupported
@@ -212,6 +236,9 @@ function InterviewRoom({ interviewType, resumeContext, onEndInterview }) {
   return (
     <div className="interview-room">
       <InterviewHeader interviewType={interviewType} />
+
+      {/* Critical behavioral alert toasts — top-right, non-intrusive */}
+      <BehaviorAlertToast alertRef={alertToastRef} />
 
       <main className="interview-room__stage">
         <AIInterviewerPanel
@@ -247,6 +274,13 @@ function InterviewRoom({ interviewType, resumeContext, onEndInterview }) {
         onToggleCamera={toggleCamera}
         onEndInterview={handleEndInterview}
         voiceDisabled={isLoading || isSpeaking}
+      />
+
+      {/* Behavior Analysis slide-out sidebar — collapsed by default */}
+      <BehaviorSidebar
+        isOpen={sidebarOpen}
+        onToggle={() => setSidebarOpen((prev) => !prev)}
+        metrics={behaviorMetrics}
       />
     </div>
   );
