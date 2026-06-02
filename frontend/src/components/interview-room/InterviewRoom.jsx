@@ -248,7 +248,7 @@ function InterviewRoom({ interviewType, resumeContext, onEndInterview }) {
       timeAwayMs: integrityReport.timeAwayMs,
     };
 
-    onEndInterview(finalReport);
+    onEndInterview(finalReport, messagesRef.current);
   };
 
   const combinedError = voiceNotice || (!speech.isSupported && !ttsSupported
