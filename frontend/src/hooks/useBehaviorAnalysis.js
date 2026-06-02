@@ -185,14 +185,14 @@ export function useBehaviorAnalysis({ videoRef, isListening, isSpeaking, cameraO
       if (!faceMissingStartRef.current) {
         faceMissingStartRef.current = now;
       } else if (now - faceMissingStartRef.current > FACE_MISSING_MS) {
-        emitAlert('face_missing', 'Face not visible');
+        emitAlert('face_missing', 'Integrity Signal: Face not visible');
       }
     } else {
       faceMissingStartRef.current = null;
       m.faceVisibility.missedFrames = 0;
       if (faceCount > 1) {
         visStatus = 'multiple';
-        emitAlert('multiple_faces', 'Multiple faces detected');
+        emitAlert('multiple_faces', 'Integrity Signal: Multiple persons detected');
       }
     }
     m.faceVisibility.status = visStatus;
