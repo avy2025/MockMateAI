@@ -1,0 +1,331 @@
+:root {
+  --report-primary: #381932;
+  --report-secondary: #FFF3E6;
+  --report-accent: #BFE169;
+  --report-text: #381932;
+  --report-bg: #FFFFFF;
+  --report-card-bg: #FFFFFF;
+  --report-border: rgba(56, 25, 50, 0.1);
+  --report-shadow: 0 10px 30px rgba(56, 25, 50, 0.05);
+}
+
+.report-dashboard {
+  background-color: var(--report-secondary);
+  color: var(--report-text);
+  min-height: 100vh;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  padding: 40px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.report-container {
+  max-width: 1100px;
+  width: 100%;
+  gap: 30px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header & Export */
+.report-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.report-header__title h1 {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--report-primary);
+  margin: 0;
+  letter-spacing: -0.5px;
+}
+
+.report-header__actions {
+  display: flex;
+  gap: 12px;
+}
+
+.btn-export {
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: none;
+  transition: all 0.2s ease;
+}
+
+.btn-export--pdf {
+  background-color: var(--report-primary);
+  color: white;
+}
+
+.btn-export--pdf:hover {
+  background-color: #4a2142;
+  transform: translateY(-2px);
+}
+
+.btn-export--json {
+  background-color: transparent;
+  color: var(--report-primary);
+  border: 1px solid var(--report-primary);
+}
+
+.btn-export--json:hover {
+  background-color: rgba(56, 25, 50, 0.05);
+  transform: translateY(-2px);
+}
+
+/* Section Containers */
+.report-section {
+  background: var(--report-card-bg);
+  border-radius: 16px;
+  padding: 30px;
+  box-shadow: var(--report-shadow);
+  border: 1px solid var(--report-border);
+}
+
+.report-section__title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 24px;
+  color: var(--report-primary);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid var(--report-border);
+}
+
+/* Top Stats Dashboard */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  margin-bottom: 10px;
+}
+
+.stat-card {
+  background: white;
+  padding: 24px;
+  border-radius: 16px;
+  box-shadow: var(--report-shadow);
+  border: 1px solid var(--report-border);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  transition: transform 0.3s ease;
+}
+
+.stat-card:hover {
+  transform: scale(1.02);
+}
+
+.stat-card__label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #8a7086;
+  margin-bottom: 8px;
+}
+
+.stat-card__value {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: var(--report-primary);
+}
+
+.stat-card__sub {
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin-top: 4px;
+}
+
+/* Candidate Overview */
+.overview-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+}
+
+.overview-info h3 {
+  margin-top: 0;
+  font-size: 1.5rem;
+  margin-bottom: 5px;
+}
+
+.overview-info .date {
+  color: #8a7086;
+  font-size: 0.9rem;
+  margin-bottom: 20px;
+}
+
+.overview-summary p {
+  line-height: 1.6;
+  color: #555;
+}
+
+.skills-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 15px;
+}
+
+.skill-tag {
+  padding: 6px 12px;
+  background: var(--report-secondary);
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--report-primary);
+}
+
+/* Assessment Split */
+.assessment-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px;
+}
+
+.points-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.point-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 12px;
+  font-size: 0.95rem;
+}
+
+.point-icon {
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.point-text {
+  line-height: 1.4;
+}
+
+.assessment-score-teaser {
+  font-weight: 700;
+  margin-bottom: 15px;
+  font-size: 1.1rem;
+}
+
+/* Metrics Table/Grid */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+}
+
+.metric-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--report-border);
+}
+
+.metric-row:last-child {
+  border-bottom: none;
+}
+
+.metric-label {
+  font-weight: 500;
+  color: #666;
+}
+
+.metric-value {
+  font-weight: 700;
+  color: var(--report-primary);
+}
+
+/* Overall Section */
+.overall-assessment {
+  display: grid;
+  grid-template-columns: 350px 1fr;
+  gap: 40px;
+  align-items: center;
+}
+
+.overall-band {
+  text-align: center;
+  padding: 30px;
+  background: var(--report-primary);
+  color: white;
+  border-radius: 20px;
+}
+
+.overall-band__score {
+  font-size: 4rem;
+  font-weight: 900;
+  margin: 10px 0;
+}
+
+.overall-band__label {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 5px;
+}
+
+.readiness-badge {
+  display: inline-block;
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  background: var(--report-accent);
+  color: var(--report-primary);
+  margin-top: 10px;
+}
+
+.next-steps-card {
+  background: #fdfaf6;
+  border-left: 4px solid var(--report-accent);
+  padding: 15px 20px;
+  margin-top: 20px;
+  border-radius: 0 8px 8px 0;
+}
+
+.next-steps-card h4 {
+  margin: 0 0 5px 0;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.report-section {
+  animation: fadeIn 0.5s ease forwards;
+}
+
+.report-section:nth-child(2) { animation-delay: 0.1s; }
+.report-section:nth-child(3) { animation-delay: 0.2s; }
+.report-section:nth-child(4) { animation-delay: 0.3s; }
+.report-section:nth-child(5) { animation-delay: 0.4s; }
+
+/* Responsive */
+@media (max-width: 900px) {
+  .overview-grid, .assessment-grid, .metrics-grid, .overall-assessment {
+    grid-template-columns: 1fr;
+  }
+  .overall-assessment {
+    text-align: center;
+  }
+}
