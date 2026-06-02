@@ -34,3 +34,22 @@ export async function sendBehaviorReport(payload) {
     // Silently ignore — behavioral data is supplementary
   }
 }
+
+/**
+ * Request the final aggregate intelligence report from the backend.
+ * @param {{ sessionId: string, chatHistory: object[], behaviorReport: object, interviewType: string }} payload
+ */
+export async function generateReport(payload) {
+  const res = await fetch(`${API_BASE}/api/report/generate`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) {
+    throw new Error('Report generation failed');
+  }
+
+  return res.json();
+}
+
