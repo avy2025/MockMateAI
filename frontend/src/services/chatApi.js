@@ -53,3 +53,15 @@ export async function generateReport(payload) {
   return res.json();
 }
 
+/**
+ * Fetch a previously generated report by session ID.
+ * @param {string} sessionId 
+ */
+export async function getReport(sessionId) {
+  const res = await fetch(`${API_BASE}/api/report/${sessionId}`);
+  if (!res.ok) {
+    throw new Error('Failed to fetch report');
+  }
+  return res.json();
+}
+
