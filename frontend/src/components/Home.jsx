@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 const Home = ({ onStartInterview }) => {
   return (
@@ -32,6 +33,12 @@ const Home = ({ onStartInterview }) => {
               Start Technical Interview
             </button>
           </div>
+
+          <div style={{ marginTop: '30px', borderTop: '1px solid #eee', paddingTop: '20px' }}>
+            <Link to="/recruiter" style={{ color: '#381932', fontWeight: 600, textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+              <span>🔐</span> Recruiter Portal
+            </Link>
+          </div>
         </div>
       </main>
 
@@ -41,6 +48,7 @@ const Home = ({ onStartInterview }) => {
     </div>
   );
 };
+
 
 const styles = {
   container: {

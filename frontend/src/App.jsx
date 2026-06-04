@@ -6,6 +6,13 @@ import InterviewRoom from './components/interview-room/InterviewRoom';
 import ReportDashboard from './components/ReportDashboard';
 import { sendBehaviorReport, generateReport } from './services/chatApi';
 
+// Recruiter Components
+import RecruiterLayout from './components/recruiter/RecruiterLayout';
+import DashboardOverview from './components/recruiter/DashboardOverview';
+import CandidateManagement from './components/recruiter/CandidateManagement';
+import CandidateProfile from './components/recruiter/CandidateProfile';
+import ComparisonTool from './components/recruiter/ComparisonTool';
+
 function MainApp() {
   const navigate = useNavigate();
   const [interviewType, setInterviewType] = useState(null);
@@ -90,9 +97,18 @@ function MainApp() {
       } />
       <Route path="/report/loading" element={<LoadingScreen />} />
       <Route path="/report/:sessionId" element={<ReportDashboard report={finalReport} onBack={goHome} />} />
+
+      {/* Recruiter Routes */}
+      <Route path="/recruiter" element={<RecruiterLayout />}>
+        <Route index element={<DashboardOverview />} />
+        <Route path="candidates" element={<CandidateManagement />} />
+        <Route path="candidate/:sessionId" element={<CandidateProfile />} />
+        <Route path="compare" element={<ComparisonTool />} />
+      </Route>
     </Routes>
   );
 }
+
 
 function LoadingScreen() {
   return (
