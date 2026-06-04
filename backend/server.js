@@ -6,6 +6,7 @@ const uploadRoutes = require('./routes/upload');
 const resumeContextRoutes = require('./routes/resumeContext');
 const behaviorReportRoutes = require('./routes/behaviorReport');
 const reportRoutes = require('./routes/report');
+const recruiterRoutes = require('./routes/recruiter');
 
 dotenv.config();
 
@@ -21,6 +22,8 @@ app.use('/api/upload-resume', uploadRoutes);
 app.use('/api/resume-context', resumeContextRoutes);
 app.use('/api/behavior-report', behaviorReportRoutes);
 app.use('/api/report', reportRoutes);
+app.use('/api/recruiter', recruiterRoutes);
+
 
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', service: 'MockMate AI Backend' });
