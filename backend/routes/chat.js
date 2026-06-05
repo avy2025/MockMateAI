@@ -21,19 +21,25 @@ function buildInterviewPrompt({
   message,
   resumeContext,
   isStart,
+  interviewPlan
 }) {
+  const roleName = interviewPlan?.role || interviewType || 'Professional';
+  const focusAreas = interviewPlan?.focusAreas ? interviewPlan.focusAreas.join(', ') : 'general technical skills';
+  const difficulty = interviewPlan?.difficulty || 'Intermediate';
+  const evaluationCriteria = interviewPlan?.criteria ? interviewPlan.criteria.join(', ') : 'correctness, clarity, and communication';
+
   const scoringBlock = `
 YOUR TASK:
 1. Evaluate the candidate's latest response for:
-   - Clarity (how well they explained)
-   - Correctness (accuracy of info)
-   - Communication (tone/confidence)
-   - Depth (technical/professional detail)
+   - Relevance to ${roleName} requirements
+   - ${evaluationCriteria}
+   - Technical Depth (expecting ${difficulty} level)
 2. Decide the score (out of 10).
 3. Generate the NEXT question for the interview.
 4. INTERVIEW RULES:
    - Ask ONLY ONE question at a time.
    - Keep questions concise.
+   - Focus on these areas: ${focusAreas}.
    - If answer is weak -> ask follow-up to probe deeper.
    - If answer is strong -> increase difficulty or move to the next topic.
    - No long paragraphs or preambles.
@@ -55,26 +61,28 @@ Return ONLY valid JSON.`;
     const startGuidance = isStart
       ? `
 OPENING QUESTION:
-- This is the first question. Start with their strongest project or a key technical skill from the resume.
-- Do NOT ask generic questions like "Tell me about yourself" unless the resume lacks detail.`
+- This is the first question of the ${roleName} interview. 
+- Target difficulty: ${difficulty}.
+- Start with their strongest project or a key technical skill from the resume that matches the role requirements.`
       : '';
 
     return `
-You are MockMate AI conducting a personalized ${interviewType} interview.
+You are MockMate AI conducting a personalized ${roleName} interview at a top tech firm.
+
+Selected Role: ${roleName}
+Interview Focus Areas: ${focusAreas}
+Expected Difficulty: ${difficulty}
 
 Candidate Resume Context:
 ${resumeContext}
 
 Rules:
 - Ask questions from projects and skills listed in the resume context
+- Align questions with ${roleName} expectations
 - Ask only ONE question at a time
 - Ask follow-up questions when answers need more depth
 - Keep tone professional
-- Avoid generic questions not tied to their background
-- Prioritize: projects, technical skills, experience, certifications
-- If React (or similar) appears in skills, ask React-specific questions
-- Ask project architecture and problem-solving questions from their projects
-- Do not invent experience the candidate does not have on their resume
+- Avoid generic questions not tied to their background or the target role
 ${startGuidance}
 
 CURRENT INTERVIEW CONTEXT:
@@ -86,7 +94,10 @@ ${scoringBlock}`;
   }
 
   return `
-You are an expert ${interviewType} interviewer at a top tech company.
+You are an expert ${roleName} interviewer at a top tech company.
+
+Interview Focus Areas: ${focusAreas}
+Expected Difficulty: ${difficulty}
 
 CURRENT INTERVIEW CONTEXT:
 ${chatHistory}
@@ -116,19 +127,24 @@ router.post('/', async (req, res) => {
       message === 'Hello, please start the interview.';
 
     let resumeContextBlock = null;
+    let interviewPlan = null;
+
     if (sessionId) {
       const session = getResumeSession(sessionId);
-      if (session?.chunks?.length) {
-        const relevantChunks = await retrieveRelevantChunks(session.chunks, {
-          message,
-          history,
-          insights: session.insights,
-          isStart,
-        });
-        resumeContextBlock = formatResumeContext(
-          relevantChunks,
-          session.insights
-        );
+      if (session) {
+        interviewPlan = session.interviewPlan;
+        if (session.chunks?.length) {
+          const relevantChunks = await retrieveRelevantChunks(session.chunks, {
+            message,
+            history,
+            insights: session.insights,
+            isStart,
+          });
+          resumeContextBlock = formatResumeContext(
+            relevantChunks,
+            session.insights
+          );
+        }
       }
     }
 
@@ -138,6 +154,7 @@ router.post('/', async (req, res) => {
       message,
       resumeContext: resumeContextBlock,
       isStart,
+      interviewPlan
     });
 
     let responseText;
@@ -148,14 +165,14 @@ router.post('/', async (req, res) => {
       console.error('Gemini API Error:', apiError.message);
       responseText = JSON.stringify({
         reply: resumeContextBlock
-          ? "I see strong project experience on your resume. Walk me through the architecture of your most significant project and the technical decisions you made."
-          : "That's a solid point about React. Can you explain how you manage state in large applications?",
+          ? "I see strong professional experience on your resume. Walk me through the architecture of your most significant project and the technical decisions you made that align with this role."
+          : "That's a solid point. Can you explain how you handle complex technical challenges in this field?",
         evaluation: {
           score: 8,
           strengths: ['Clear articulation of experience', 'Technical relevance'],
-          weaknesses: ['Could be more specific about project sizes'],
+          weaknesses: ['Could be more specific about project impact'],
           improvements: [
-            'Mention specific state management tools like Redux or Context API',
+            'Provide more quantitative data where possible',
           ],
         },
       });
@@ -183,6 +200,7 @@ router.post('/', async (req, res) => {
     res.json({
       ...data,
       personalized: Boolean(resumeContextBlock),
+      role: interviewPlan?.role || interviewType
     });
   } catch (error) {
     console.error('Chat Error:', error);

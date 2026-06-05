@@ -16,8 +16,11 @@ class ReportGenerator {
       behaviorReport, 
       interviewType, 
       resumeInsights,
-      candidateName 
+      candidateName,
+      interviewPlan
     } = data;
+
+    const targetRole = interviewPlan?.role || interviewType || 'Professional Role';
 
     // 1. Calculate Scores and Build Summaries (Deterministic)
     const techScore = ScoreAggregator.calculateTechnicalScore(chatHistory);
@@ -30,7 +33,8 @@ class ReportGenerator {
 
     // 2. Generate AI content
     const prompt = this._buildPrompt({
-      interviewType,
+      targetRole,
+      interviewPlan,
       resumeInsights,
       chatHistory,
       behavioralSummary,
@@ -46,20 +50,27 @@ class ReportGenerator {
       aiGeneratedContent = JSON.parse(jsonMatch ? jsonMatch[0] : responseText);
     } catch (error) {
       console.error('AI Report Gen Error:', error);
-      aiGeneratedContent = this._getFallbackContent(techScore, commScore, overallScore);
+      aiGeneratedContent = this._getFallbackContent(techScore, commScore, overallScore, targetRole);
     }
 
     // 3. Assemble Final Report
     return {
       sessionId,
       candidateName,
+      targetRole,
       interviewDate: new Date().toISOString(),
       interviewDuration: behaviorReport.duration || '20-30 minutes',
-      interviewFocusAreas: aiGeneratedContent.focusAreas || [interviewType],
+      interviewFocusAreas: interviewPlan?.focusAreas || aiGeneratedContent.focusAreas || [interviewType],
       resumeSummary: resumeInsights.summary || 'N/A',
       skillsDetected: resumeInsights.skills || [],
       candidateOverview: aiGeneratedContent.candidateOverview,
       
+      roleAssessment: {
+        roleReadinessScore: aiGeneratedContent.roleReadinessScore || overallScore,
+        skillGapAnalysis: aiGeneratedContent.skillGapAnalysis || [],
+        recommendedLearningPath: aiGeneratedContent.recommendedLearningPath || []
+      },
+
       technicalPerformance: {
         score: techScore,
         ...aiGeneratedContent.technicalPerformance,
@@ -98,12 +109,13 @@ class ReportGenerator {
     };
   }
 
-  _buildPrompt({ interviewType, resumeInsights, chatHistory, behavioralSummary, integritySummary, scores }) {
+  _buildPrompt({ targetRole, interviewPlan, resumeInsights, chatHistory, behavioralSummary, integritySummary, scores }) {
     return `
-You are an expert Executive Interview Auditor. Generate an Enterprise-Grade Final Interview Intelligence Report.
+You are an expert Executive Interview Auditor. Generate an Enterprise-Grade Final Interview Intelligence Report for the role of ${targetRole}.
 
 CONTEXT:
-Interview Type: ${interviewType}
+Target Role: ${targetRole}
+Interview Plan: ${JSON.stringify(interviewPlan)}
 Resume: ${JSON.stringify(resumeInsights)}
 Chat History: ${JSON.stringify(chatHistory)}
 Behavioral Observations: ${JSON.stringify(behavioralSummary.observations)}
@@ -112,14 +124,21 @@ Calculated Scores: Tech ${scores.techScore}, Comm ${scores.commScore}, Overall $
 
 REQUIREMENTS:
 1. Be evidence-based and neutral.
-2. Do NOT infer personality, emotions, or truthfulness.
-3. Focus on observable interview performance.
+2. Evaluate "Role Readiness" specifically for ${targetRole}.
+3. Perform a "Skill Gap Analysis" comparing candidate performance vs ${targetRole} expectations.
 4. Output ONLY a JSON object.
 
 JSON SCHEMA:
 {
   "focusAreas": ["string"],
   "candidateOverview": "AI-generated summary of candidate background vs interview performance",
+  "roleReadinessScore": number (0-100),
+  "skillGapAnalysis": [
+    { "skill": "string", "status": "Strong | Gap | Developing", "comment": "string" }
+  ],
+  "recommendedLearningPath": [
+    { "topic": "string", "reason": "string", "priority": "High | Medium | Low" }
+  ],
   "technicalPerformance": {
     "knowledgeStrengths": ["string"],
     "knowledgeGaps": ["string"],
@@ -144,7 +163,7 @@ JSON SCHEMA:
     "communicationSuggestions": ["string"],
     "interviewReadinessRecommendations": ["string"]
   },
-  "executiveSummary": "A high-level summary for decision makers",
+  "executiveSummary": "A high-level summary for decision makers focusing on ${targetRole} suitability",
   "overallReadinessAssessment": "A detailed readiness assessment",
   "skillDistribution": [
     { "subject": "Problem Solving", "A": number (0-100) },
@@ -157,10 +176,17 @@ JSON SCHEMA:
     `;
   }
 
-  _getFallbackContent(techScore, commScore, overallScore) {
+  _getFallbackContent(techScore, commScore, overallScore, targetRole) {
     return {
       focusAreas: ['Technical Proficiency', 'Communication'],
-      candidateOverview: "The candidate demonstrated a solid understanding of the required concepts during the session.",
+      candidateOverview: "The candidate demonstrated a solid understanding of the required concepts for the " + targetRole + " role.",
+      roleReadinessScore: overallScore,
+      skillGapAnalysis: [
+        { "skill": "Core " + targetRole + " Skills", "status": "Developing", "comment": "Demonstrated basic proficiency but needs more depth." }
+      ],
+      recommendedLearningPath: [
+        { "topic": "Advanced " + targetRole + " Patterns", "reason": "To move from intermediate to expert level.", "priority": "Medium" }
+      ],
       technicalPerformance: {
         knowledgeStrengths: ['Core concepts', 'Application logic'],
         knowledgeGaps: ['Specific edge cases'],
@@ -185,8 +211,8 @@ JSON SCHEMA:
         communicationSuggestions: ['Try using more structured examples'],
         interviewReadinessRecommendations: ['Practice deep-dive technical explanations']
       },
-      executiveSummary: "A strong performance across both technical and communication segments.",
-      overallReadinessAssessment: "The candidate is well-prepared for technical roles.",
+      executiveSummary: "A strong performance across both technical and communication segments for " + targetRole + ".",
+      overallReadinessAssessment: "The candidate is well-prepared for " + targetRole + " responsibilities.",
       skillDistribution: [
         { "subject": "Problem Solving", "A": techScore },
         { "subject": "Comm. Clarity", "A": commScore },
