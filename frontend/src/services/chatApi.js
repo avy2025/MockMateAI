@@ -65,3 +65,24 @@ export async function getReport(sessionId) {
   return res.json();
 }
 
+/**
+ * Fetch supported roles.
+ */
+export async function getRoles() {
+  const res = await fetch(`${API_BASE}/api/interview-plan/roles`);
+  if (!res.ok) throw new Error('Failed to fetch roles');
+  return res.json();
+}
+
+/**
+ * Generate an interview plan for a specific role and session.
+ */
+export async function generateInterviewPlan(payload) {
+  const res = await fetch(`${API_BASE}/api/interview-plan/generate`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error('Failed to generate interview plan');
+  return res.json();
+}
