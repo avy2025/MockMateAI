@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, useNavigate, useParams } from 'react-router-dom';
 import Home from './components/Home';
 import ResumeUpload from './components/ResumeUpload';
+import RoleSelection from './components/RoleSelection';
 import InterviewRoom from './components/interview-room/InterviewRoom';
 import ReportDashboard from './components/ReportDashboard';
 import { sendBehaviorReport, generateReport } from './services/chatApi';
@@ -17,23 +18,31 @@ function MainApp() {
   const navigate = useNavigate();
   const [interviewType, setInterviewType] = useState(null);
   const [resumeContext, setResumeContext] = useState(null);
+  const [interviewPlan, setInterviewPlan] = useState(null);
   const [finalReport, setFinalReport] = useState(null);
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
 
   const selectInterviewType = (type) => {
     setInterviewType(type);
     setResumeContext(null);
+    setInterviewPlan(null);
     navigate('/resume');
   };
 
   const handleResumeUploaded = (context) => {
     setResumeContext(context);
+    navigate('/role-selection');
+  };
+
+  const handlePlanGenerated = (plan) => {
+    setInterviewPlan(plan);
     navigate('/interview');
   };
 
   const goHome = () => {
     setInterviewType(null);
     setResumeContext(null);
+    setInterviewPlan(null);
     setFinalReport(null);
     navigate('/');
   };
@@ -88,10 +97,18 @@ function MainApp() {
           onBack={() => navigate('/')}
         />
       } />
+      <Route path="/role-selection" element={
+        <RoleSelection
+          sessionId={resumeContext?.sessionId}
+          onPlanGenerated={handlePlanGenerated}
+          onBack={() => navigate('/resume')}
+        />
+      } />
       <Route path="/interview" element={
         <InterviewRoom
           interviewType={interviewType}
           resumeContext={resumeContext}
+          interviewPlan={interviewPlan}
           onEndInterview={handleEndInterview}
         />
       } />

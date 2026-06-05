@@ -19,7 +19,9 @@ import {
   Clock,
   Eye,
   MessageSquare,
-  BarChart3
+  BarChart3,
+  BookOpen,
+  ArrowRight
 } from 'lucide-react';
 import { 
   BarChart, 
@@ -66,17 +68,18 @@ const ReportDashboard = ({ report: initialReport, onBack }) => {
   }, [sessionId, initialReport]);
 
   if (loading) return (
-    <div className="report-loading">
-      <div className="spinner"></div>
-      <p>Retrieving Assessment Data...</p>
+    <div className="report-loading" style={{ height: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', background: '#FFF3E6', color: '#381932' }}>
+      <div className="spinner" style={{ width: '50px', height: '50px', border: '5px solid rgba(56, 25, 50, 0.1)', borderTop: '5px solid #381932', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+      <p style={{ marginTop: '20px', fontWeight: 600 }}>Retrieving Assessment Data...</p>
+      <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
     </div>
   );
 
   if (!report) return (
-    <div className="report-error">
+    <div className="report-error" style={{ height: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', background: '#FFF3E6', color: '#381932' }}>
       <h2>Report Not Found</h2>
       <p>The requested interview session could not be located.</p>
-      <button onClick={() => navigate('/')}>Return Home</button>
+      <button onClick={() => navigate('/')} style={{ marginTop: '20px', padding: '10px 25px', backgroundColor: '#381932', color: '#FFF3E6', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>Return Home</button>
     </div>
   );
 
@@ -113,22 +116,22 @@ const ReportDashboard = ({ report: initialReport, onBack }) => {
   };
 
   // Chart Data Preparation
-  const scoreData = [
-    { name: 'Technical', score: report.technicalPerformance.score },
-    { name: 'Comm.', score: report.communicationAssessment.score },
-    { name: 'Integrity', score: report.integritySummary.integrityScore },
-    { name: 'Overall', score: report.overallAssessment.score },
-  ];
-
-  const radarData = report.charts?.skillDistribution || [
+  const radarData = report.charts?.skillDistribution?.length ? report.charts.skillDistribution : [
     { subject: 'Problem Solving', A: report.technicalPerformance.score },
     { subject: 'Clarity', A: report.communicationAssessment.score },
     { subject: 'Tech Depth', A: report.technicalPerformance.score - 5 },
     { subject: 'Behavioral', A: report.behavioralObservations.metrics.attention },
-    { subject: 'Readiness', A: report.overallAssessment.score },
+    { subject: 'Role Fit', A: report.roleAssessment?.roleReadinessScore || report.overallAssessment.score },
   ];
 
-  const COLORS = ['#381932', '#BFE169', '#4D96FF', '#FF6B6B'];
+  const getColorByStatus = (status) => {
+    switch (status.toLowerCase()) {
+      case 'strong': return '#BFE169';
+      case 'gap': return '#FF6B6B';
+      case 'developing': return '#4D96FF';
+      default: return '#8a7086';
+    }
+  };
 
   return (
     <div className="report-dashboard">
@@ -161,10 +164,10 @@ const ReportDashboard = ({ report: initialReport, onBack }) => {
           {/* Executive Scorecards */}
           <section className="executive-summary-grid">
             <div className="main-score-card">
-              <div className="score-label">Overall Readiness</div>
-              <div className="score-value">{report.overallAssessment.score}<span>/100</span></div>
+              <div className="score-label">Role Readiness</div>
+              <div className="score-value">{report.roleAssessment?.roleReadinessScore || report.overallAssessment.score}<span>/100</span></div>
               <div className="score-band" style={{ color: '#BFE169' }}>{report.overallAssessment.performanceBand}</div>
-              <div className="readiness-tag">{report.overallAssessment.readiness}</div>
+              <div className="readiness-tag">{report.targetRole || 'General Role'} Readiness</div>
             </div>
             
             <div className="mini-score-cards">
@@ -205,9 +208,9 @@ const ReportDashboard = ({ report: initialReport, onBack }) => {
               <div className="candidate-profile">
                 <h3>{report.candidateName}</h3>
                 <div className="meta-tags">
+                  <span className="meta-tag"><Target size={14} /> {report.targetRole || 'Not Specified'}</span>
                   <span className="meta-tag"><Clock size={14} /> {report.interviewDuration}</span>
                   <span className="meta-tag"><Activity size={14} /> {new Date(report.interviewDate).toLocaleDateString()}</span>
-                  <span className="meta-tag"><Target size={14} /> {report.interviewFocusAreas?.[0] || 'General'}</span>
                 </div>
                 <div className="ai-summary-box">
                   <h4>AI Executive Summary</h4>
@@ -220,6 +223,63 @@ const ReportDashboard = ({ report: initialReport, onBack }) => {
                 <div className="skills-cloud">
                   {report.skillsDetected?.slice(0, 12).map((skill, i) => (
                     <span key={i} className="skill-chip">{skill}</span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* New Section: Role-Specific Assessment */}
+          <section className="report-page-section">
+            <h2 className="section-title"><Award size={20} /> {report.targetRole} Fit Analysis</h2>
+            <div className="role-analysis-grid" style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '30px' }}>
+              <div className="skill-gap-analysis">
+                <h4>Skill Gap Analysis</h4>
+                <div className="gap-list" style={{ marginTop: '15px' }}>
+                  {report.roleAssessment?.skillGapAnalysis?.map((item, i) => (
+                    <div key={i} className="gap-item" style={{ 
+                      display: 'flex', 
+                      justifyContent: 'space-between', 
+                      alignItems: 'center',
+                      padding: '12px 15px',
+                      background: 'rgba(255,255,255,0.5)',
+                      borderRadius: '10px',
+                      marginBottom: '10px',
+                      borderLeft: `4px solid ${getColorByStatus(item.status)}`
+                    }}>
+                      <div>
+                        <strong>{item.skill}</strong>
+                        <p style={{ margin: '4px 0 0 0', fontSize: '0.85rem', opacity: 0.8 }}>{item.comment}</p>
+                      </div>
+                      <span style={{ 
+                        fontSize: '0.75rem', 
+                        fontWeight: 700, 
+                        textTransform: 'uppercase',
+                        padding: '4px 10px',
+                        borderRadius: '20px',
+                        background: `${getColorByStatus(item.status)}22`,
+                        color: getColorByStatus(item.status)
+                      }}>{item.status}</span>
+                    </div>
+                  ))}
+                  {(!report.roleAssessment?.skillGapAnalysis || report.roleAssessment.skillGapAnalysis.length === 0) && (
+                    <p style={{ opacity: 0.6, fontSize: '0.9rem' }}>Comprehensive skill assessment for this role was not generated.</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="learning-path">
+                <h4>Recommended Learning Path</h4>
+                <div className="path-list" style={{ marginTop: '15px' }}>
+                  {report.roleAssessment?.recommendedLearningPath?.map((item, i) => (
+                    <div key={i} className="path-item" style={{ marginBottom: '15px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                        <BookOpen size={14} color="#381932" />
+                        <strong style={{ fontSize: '0.95rem' }}>{item.topic}</strong>
+                        <span style={{ fontSize: '0.7rem', opacity: 0.6, marginLeft: 'auto' }}>{item.priority} Priority</span>
+                      </div>
+                      <p style={{ fontSize: '0.85rem', margin: 0, opacity: 0.8 }}>{item.reason}</p>
+                    </div>
                   ))}
                 </div>
               </div>
