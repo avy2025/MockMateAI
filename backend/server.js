@@ -7,6 +7,7 @@ const resumeContextRoutes = require('./routes/resumeContext');
 const behaviorReportRoutes = require('./routes/behaviorReport');
 const reportRoutes = require('./routes/report');
 const recruiterRoutes = require('./routes/recruiter');
+const interviewPlanRoutes = require('./routes/interviewPlan');
 
 dotenv.config();
 
@@ -23,6 +24,7 @@ app.use('/api/resume-context', resumeContextRoutes);
 app.use('/api/behavior-report', behaviorReportRoutes);
 app.use('/api/report', reportRoutes);
 app.use('/api/recruiter', recruiterRoutes);
+app.use('/api/interview-plan', interviewPlanRoutes);
 
 
 app.get('/health', (req, res) => {
