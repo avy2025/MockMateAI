@@ -23,6 +23,10 @@ const RecruiterLayout = () => {
             <span className="nav-icon">⚖️</span>
             Comparison
           </NavLink>
+          <NavLink to="/recruiter/copilot" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
+            <span className="nav-icon">✨</span>
+            AI Copilot
+          </NavLink>
         </nav>
 
         <div style={{ marginTop: 'auto', padding: '1rem', borderTop: '1px solid rgba(255,255,255,0.1)' }}>

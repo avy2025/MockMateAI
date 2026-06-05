@@ -325,3 +325,35 @@
 .animate-fade-in {
   animation: fadeIn 0.4s ease forwards;
 }
+
+/* Copilot Specific Styles */
+.copilot-container {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.messages-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.messages-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.messages-container::-webkit-scrollbar-thumb {
+  background: rgba(56, 25, 50, 0.1);
+  border-radius: 10px;
+}
+
+.messages-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(56, 25, 50, 0.2);
+}
+
+.candidate-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.candidate-list::-webkit-scrollbar-thumb {
+  background: rgba(56, 25, 50, 0.1);
+  border-radius: 10px;
+}

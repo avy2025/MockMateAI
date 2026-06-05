@@ -13,6 +13,7 @@ import DashboardOverview from './components/recruiter/DashboardOverview';
 import CandidateManagement from './components/recruiter/CandidateManagement';
 import CandidateProfile from './components/recruiter/CandidateProfile';
 import ComparisonTool from './components/recruiter/ComparisonTool';
+import RecruiterCopilot from './components/recruiter/RecruiterCopilot';
 
 function MainApp() {
   const navigate = useNavigate();
@@ -121,6 +122,7 @@ function MainApp() {
         <Route path="candidates" element={<CandidateManagement />} />
         <Route path="candidate/:sessionId" element={<CandidateProfile />} />
         <Route path="compare" element={<ComparisonTool />} />
+        <Route path="copilot" element={<RecruiterCopilot />} />
       </Route>
     </Routes>
   );
