@@ -117,6 +117,23 @@ const CandidateProfile = () => {
             </div>
           </section>
 
+          {/* Video Replay Section */}
+          <section className="profile-section content-card" style={{ marginTop: '1.5rem' }}>
+            <h3 className="section-title"><Activity size={20} /> Video Interview Replay</h3>
+            <div style={{ background: '#000', borderRadius: '12px', overflow: 'hidden', aspectRatio: '16/9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+               <video 
+                 controls 
+                 style={{ width: '100%', height: '100%' }}
+                 src={`http://localhost:5000/api/recordings/${sessionId}`}
+                 onError={(e) => {
+                   e.target.style.display = 'none';
+                   e.target.parentElement.innerHTML = '<div style="color: white; opacity: 0.6">Recording not available for this session</div>';
+                 }}
+               />
+            </div>
+          </section>
+
+
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginTop: '1.5rem' }}>
             <section className="content-card">
               <h3 className="section-title"><Zap size={20} /> Technical Assessment</h3>
