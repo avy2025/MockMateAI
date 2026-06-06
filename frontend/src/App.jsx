@@ -6,6 +6,12 @@ import RoleSelection from './components/RoleSelection';
 import InterviewRoom from './components/interview-room/InterviewRoom';
 import ReportDashboard from './components/ReportDashboard';
 import { sendBehaviorReport, generateReport } from './services/chatApi';
+import { AuthProvider, useAuth } from './hooks/useAuth';
+import ProtectedRoute from './components/ProtectedRoute';
+import Login from './components/Login';
+import Register from './components/Register';
+import InviteJoin from './components/InviteJoin';
+
 
 // Recruiter Components
 import RecruiterLayout from './components/recruiter/RecruiterLayout';
@@ -14,9 +20,13 @@ import CandidateManagement from './components/recruiter/CandidateManagement';
 import CandidateProfile from './components/recruiter/CandidateProfile';
 import ComparisonTool from './components/recruiter/ComparisonTool';
 import RecruiterCopilot from './components/recruiter/RecruiterCopilot';
+import Scheduler from './components/recruiter/Scheduler';
+
+
 
 function MainApp() {
   const navigate = useNavigate();
+  const { logout, user } = useAuth();
   const [interviewType, setInterviewType] = useState(null);
   const [resumeContext, setResumeContext] = useState(null);
   const [interviewPlan, setInterviewPlan] = useState(null);
@@ -90,40 +100,52 @@ function MainApp() {
 
   return (
     <Routes>
-      <Route path="/" element={<Home onStartInterview={selectInterviewType} />} />
-      <Route path="/resume" element={
-        <ResumeUpload
-          interviewType={interviewType}
-          onUploadSuccess={handleResumeUploaded}
-          onBack={() => navigate('/')}
-        />
-      } />
-      <Route path="/role-selection" element={
-        <RoleSelection
-          sessionId={resumeContext?.sessionId}
-          onPlanGenerated={handlePlanGenerated}
-          onBack={() => navigate('/resume')}
-        />
-      } />
-      <Route path="/interview" element={
-        <InterviewRoom
-          interviewType={interviewType}
-          resumeContext={resumeContext}
-          interviewPlan={interviewPlan}
-          onEndInterview={handleEndInterview}
-        />
-      } />
-      <Route path="/report/loading" element={<LoadingScreen />} />
-      <Route path="/report/:sessionId" element={<ReportDashboard report={finalReport} onBack={goHome} />} />
-
-      {/* Recruiter Routes */}
-      <Route path="/recruiter" element={<RecruiterLayout />}>
-        <Route index element={<DashboardOverview />} />
-        <Route path="candidates" element={<CandidateManagement />} />
-        <Route path="candidate/:sessionId" element={<CandidateProfile />} />
-        <Route path="compare" element={<ComparisonTool />} />
-        <Route path="copilot" element={<RecruiterCopilot />} />
+      {/* Public Routes */}
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+      <Route path="/invite/:token" element={<InviteJoin />} />
+      
+      {/* Protected Candidate Routes */}
+      <Route element={<ProtectedRoute allowedRoles={['candidate', 'admin']} />}>
+        <Route path="/" element={<Home onStartInterview={selectInterviewType} />} />
+        <Route path="/resume" element={
+          <ResumeUpload
+            interviewType={interviewType}
+            onUploadSuccess={handleResumeUploaded}
+            onBack={() => navigate('/')}
+          />
+        } />
+        <Route path="/role-selection" element={
+          <RoleSelection
+            sessionId={resumeContext?.sessionId}
+            onPlanGenerated={handlePlanGenerated}
+            onBack={() => navigate('/resume')}
+          />
+        } />
+        <Route path="/interview" element={
+          <InterviewRoom
+            interviewType={interviewType}
+            resumeContext={resumeContext}
+            interviewPlan={interviewPlan}
+            onEndInterview={handleEndInterview}
+          />
+        } />
+        <Route path="/report/loading" element={<LoadingScreen />} />
+        <Route path="/report/:sessionId" element={<ReportDashboard report={finalReport} onBack={goHome} />} />
       </Route>
+
+      {/* Protected Recruiter Routes */}
+      <Route element={<ProtectedRoute allowedRoles={['recruiter', 'admin']} />}>
+        <Route path="/recruiter" element={<RecruiterLayout />}>
+          <Route index element={<DashboardOverview />} />
+          <Route path="candidates" element={<CandidateManagement />} />
+          <Route path="candidate/:sessionId" element={<CandidateProfile />} />
+          <Route path="scheduler" element={<Scheduler />} />
+          <Route path="compare" element={<ComparisonTool />} />
+          <Route path="copilot" element={<RecruiterCopilot />} />
+        </Route>
+      </Route>
+
     </Routes>
   );
 }
