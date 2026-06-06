@@ -19,7 +19,7 @@ router.post('/generate', async (req, res) => {
       return res.status(400).json({ error: 'Session ID is required.' });
     }
 
-    const session = getResumeSession(sessionId);
+    const session = await getResumeSession(sessionId);
     const resumeInsights = session?.insights || {};
     const candidateName = resumeInsights.personalInfo?.name || 'Candidate';
 
@@ -32,7 +32,7 @@ router.post('/generate', async (req, res) => {
       candidateName
     });
 
-    saveReport(finalReport);
+    await saveReport(finalReport);
 
     res.json(finalReport);
   } catch (error) {
@@ -45,9 +45,9 @@ router.post('/generate', async (req, res) => {
  * GET /api/report/:sessionId
  * Retrieves a previously generated report.
  */
-router.get('/:sessionId', (req, res) => {
+router.get('/:sessionId', async (req, res) => {
   const { sessionId } = req.params;
-  const report = getReport(sessionId);
+  const report = await getReport(sessionId);
 
   if (!report) {
     return res.status(404).json({ error: 'Report not found.' });
@@ -55,6 +55,7 @@ router.get('/:sessionId', (req, res) => {
 
   res.json(report);
 });
+
 
 module.exports = router;
 

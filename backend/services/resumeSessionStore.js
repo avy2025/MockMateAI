@@ -1,28 +1,32 @@
+const InterviewSession = require('../models/InterviewSession');
+const Resume = require('../models/Resume');
 const crypto = require('crypto');
-
-const SESSION_TTL_MS = 60 * 60 * 1000;
-const sessions = new Map();
-
-function pruneExpired() {
-  const now = Date.now();
-  for (const [id, session] of sessions) {
-    if (now - session.createdAt > SESSION_TTL_MS) {
-      sessions.delete(id);
-    }
-  }
-}
 
 /**
  * @param {object} data
+ * @param {string} userId
  * @returns {string} sessionId
  */
-function createResumeSession(data) {
-  pruneExpired();
+async function createResumeSession(data, userId) {
   const sessionId = crypto.randomUUID();
-  sessions.set(sessionId, {
-    ...data,
-    createdAt: Date.now(),
+  
+  // Create Resume entry first if not exists
+  const resume = await Resume.create({
+    user: userId,
+    fileName: data.fileName,
+    filePath: data.filePath,
+    insights: data.insights
   });
+
+  const session = await InterviewSession.create({
+    user: userId,
+    sessionId,
+    candidateName: data.insights?.personalInfo?.name || 'Candidate',
+    interviewType: data.interviewType || 'General',
+    resume: resume._id,
+    startedAt: new Date()
+  });
+
   return sessionId;
 }
 
@@ -30,20 +34,41 @@ function createResumeSession(data) {
  * @param {string} sessionId
  * @returns {object|null}
  */
-function getResumeSession(sessionId) {
-  pruneExpired();
-  const session = sessions.get(sessionId);
-  if (!session) return null;
+async function getResumeSession(sessionId) {
+  try {
+    const session = await InterviewSession.findOne({ sessionId }).populate('resume');
+    if (!session) return null;
 
-  if (Date.now() - session.createdAt > SESSION_TTL_MS) {
-    sessions.delete(sessionId);
+    return {
+      sessionId: session.sessionId,
+      insights: session.resume?.insights,
+      interviewType: session.interviewType,
+      candidateName: session.candidateName,
+      status: session.status,
+      createdAt: session.startedAt
+    };
+  } catch (error) {
+    console.error('Error getting resume session:', error);
     return null;
   }
+}
 
-  return session;
+/**
+ * @param {string} sessionId
+ * @param {object} updates
+ */
+async function updateResumeSession(sessionId, updates) {
+  try {
+    await InterviewSession.findOneAndUpdate({ sessionId }, updates);
+    return true;
+  } catch (error) {
+    console.error('Error updating resume session:', error);
+    return false;
+  }
 }
 
 module.exports = {
   createResumeSession,
   getResumeSession,
+  updateResumeSession,
 };

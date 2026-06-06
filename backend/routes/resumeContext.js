@@ -5,8 +5,8 @@ const { stripEmbeddingsFromChunks } = require('../services/resumeEmbeddings');
 const router = express.Router();
 
 // GET /api/resume-context/:sessionId
-router.get('/:sessionId', (req, res) => {
-  const session = getResumeSession(req.params.sessionId);
+router.get('/:sessionId', async (req, res) => {
+  const session = await getResumeSession(req.params.sessionId);
 
   if (!session) {
     return res.status(404).json({
@@ -19,10 +19,11 @@ router.get('/:sessionId', (req, res) => {
     success: true,
     sessionId: req.params.sessionId,
     filename: session.filename,
-    chunks: stripEmbeddingsFromChunks(session.chunks),
+    chunks: session.chunks ? stripEmbeddingsFromChunks(session.chunks) : [],
     insights: session.insights,
     extractedText: session.extractedText,
   });
 });
+
 
 module.exports = router;
