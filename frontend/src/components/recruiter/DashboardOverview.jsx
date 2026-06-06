@@ -76,24 +76,25 @@ const DashboardOverview = () => {
         <div className="content-card">
           <h3 style={{ marginBottom: '1.5rem', fontWeight: 800 }}>Top Skills Demanded</h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-            {[
-              { skill: 'React', val: 92 },
-              { skill: 'Communication', val: 85 },
-              { skill: 'Problem Solving', val: 78 },
-              { skill: 'Node.js', val: 70 }
-            ].map((s, i) => (
+            {(metrics?.topSkills || [
+              { skill: 'React', count: 92 },
+              { skill: 'Communication', count: 85 },
+              { skill: 'Problem Solving', count: 78 },
+              { skill: 'Node.js', count: 70 }
+            ]).map((s, i) => (
               <div key={i}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px', fontSize: '0.9rem' }}>
                   <span>{s.skill}</span>
-                  <span style={{ fontWeight: 700 }}>{s.val}%</span>
+                  <span style={{ fontWeight: 700 }}>{s.count}%</span>
                 </div>
                 <div style={{ height: '6px', background: '#eee', borderRadius: '3px', overflow: 'hidden' }}>
-                  <div style={{ width: `${s.val}%`, height: '100%', background: '#381932' }}></div>
+                  <div style={{ width: `${s.count}%`, height: '100%', background: '#381932' }}></div>
                 </div>
               </div>
             ))}
           </div>
         </div>
+
       </div>
     </div>
   );
