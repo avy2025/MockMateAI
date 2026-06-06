@@ -3,7 +3,7 @@ import { useWebcam } from '../../hooks/useWebcam';
 import { useSpeechRecognition } from '../../hooks/useSpeechRecognition';
 import { useTextToSpeech } from '../../hooks/useTextToSpeech';
 import { useBehaviorAnalysis } from '../../hooks/useBehaviorAnalysis';
-import { sendChatMessage } from '../../services/chatApi';
+import { sendChatMessage, uploadRecording } from '../../services/chatApi';
 import InterviewHeader from './InterviewHeader';
 import AIInterviewerPanel from './AIInterviewerPanel';
 import CandidatePanel from './CandidatePanel';
@@ -13,6 +13,7 @@ import BehaviorSidebar from './BehaviorSidebar';
 import IntegritySidebar from './IntegritySidebar';
 import BehaviorAlertToast from './BehaviorAlertToast';
 import { useIntegrityMonitoring } from '../../hooks/useIntegrityMonitoring';
+import { useMediaRecording } from '../../hooks/useMediaRecording';
 import '../../styles/interview-room.css';
 import '../../styles/behavior-analysis.css';
 
@@ -29,6 +30,9 @@ function InterviewRoom({ interviewType, resumeContext, onEndInterview }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [integritySidebarOpen, setIntegritySidebarOpen] = useState(false);
 
+  // Recording Hook
+  const { startRecording, stopRecording, recordingBlob } = useMediaRecording();
+
   // Alert toast ref — wired between useBehaviorAnalysis and BehaviorAlertToast
   const alertToastRef = useRef(null);
 
@@ -40,7 +44,15 @@ function InterviewRoom({ interviewType, resumeContext, onEndInterview }) {
     toggleCamera,
     startStream,
     endSession,
+    streamRef,
   } = useWebcam({ autoStart: true });
+
+  // Start recording when stream is active
+  useEffect(() => {
+    if (status === 'active' && streamRef.current) {
+      startRecording(streamRef.current);
+    }
+  }, [status, streamRef, startRecording]);
 
   const { speak, stop: stopSpeaking, isSpeaking, isSupported: ttsSupported } = useTextToSpeech();
 
@@ -231,9 +243,10 @@ function InterviewRoom({ interviewType, resumeContext, onEndInterview }) {
     speech.startListening();
   }, [isLoading, isSpeaking, speech, stopSpeaking]);
 
-  const handleEndInterview = () => {
+  const handleEndInterview = async () => {
     stopSpeaking();
     speech.stopListening();
+    stopRecording(); // Stop recording
     endSession();
     
     const behaviorReport = getSessionReport();
@@ -250,6 +263,16 @@ function InterviewRoom({ interviewType, resumeContext, onEndInterview }) {
 
     onEndInterview(finalReport, messagesRef.current);
   };
+
+  // Upload recording when blob is ready
+  useEffect(() => {
+    if (recordingBlob && sessionId) {
+      uploadRecording(sessionId, recordingBlob)
+        .then(() => console.log('Recording uploaded successfully'))
+        .catch(err => console.error('Failed to upload recording:', err));
+    }
+  }, [recordingBlob, sessionId]);
+
 
   const combinedError = voiceNotice || (!speech.isSupported && !ttsSupported
     ? 'Voice features require a compatible browser (Chrome or Edge recommended).'
