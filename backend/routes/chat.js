@@ -107,6 +107,8 @@ CANDIDATE'S LATEST RESPONSE:
 ${scoringBlock}`;
 }
 
+const InterviewSession = require('../models/InterviewSession');
+
 router.post('/', async (req, res) => {
   try {
     const { message, history, interviewType, sessionId } = req.body;
@@ -130,7 +132,7 @@ router.post('/', async (req, res) => {
     let interviewPlan = null;
 
     if (sessionId) {
-      const session = getResumeSession(sessionId);
+      const session = await getResumeSession(sessionId);
       if (session) {
         interviewPlan = session.interviewPlan;
         if (session.chunks?.length) {
@@ -197,6 +199,25 @@ router.post('/', async (req, res) => {
       };
     }
 
+    // Persist transcript to DB if session exists
+    if (sessionId) {
+      try {
+        await InterviewSession.findOneAndUpdate(
+          { sessionId },
+          {
+            $push: {
+              transcript: [
+                { role: 'candidate', content: message },
+                { role: 'interviewer', content: data.reply }
+              ]
+            }
+          }
+        );
+      } catch (dbError) {
+        console.error('Transcript logging error:', dbError);
+      }
+    }
+
     res.json({
       ...data,
       personalized: Boolean(resumeContextBlock),
@@ -207,5 +228,6 @@ router.post('/', async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
 
 module.exports = router;

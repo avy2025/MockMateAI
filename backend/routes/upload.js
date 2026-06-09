@@ -11,6 +11,8 @@ const {
   stripEmbeddingsFromChunks,
 } = require('../services/resumeEmbeddings');
 
+const { protect } = require('../middleware/auth');
+
 const router = express.Router();
 
 function removeUploadedFile(filePath) {
@@ -19,7 +21,7 @@ function removeUploadedFile(filePath) {
 }
 
 // POST /api/upload-resume
-router.post('/', resumeUpload.single('resume'), async (req, res) => {
+router.post('/', protect, resumeUpload.single('resume'), async (req, res) => {
   const filePath = req.file?.path;
 
   try {
@@ -65,12 +67,13 @@ router.post('/', resumeUpload.single('resume'), async (req, res) => {
       generateEmbeddings(chunks),
       generateResumeInsights(extractedText, chunks),
     ]);
-    const sessionId = createResumeSession({
+    const sessionId = await createResumeSession({
       filename: req.file.originalname,
       extractedText,
       chunks: embeddedChunks,
       insights,
-    });
+    }, req.user.id);
+
 
     res.json({
       success: true,
