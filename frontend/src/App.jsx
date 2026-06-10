@@ -180,11 +180,13 @@ function LoadingScreen() {
 
 function App() {
   return (
-    <Router>
-      <div className="App">
-        <MainApp />
-      </div>
-    </Router>
+    <AuthProvider>
+      <Router>
+        <div className="App">
+          <MainApp />
+        </div>
+      </Router>
+    </AuthProvider>
   );
 }
 
