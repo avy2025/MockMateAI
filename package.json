@@ -1,0 +1,26 @@
+{
+  "name": "mockmateai",
+  "version": "1.0.0",
+  "description": "MockMate AI is a clean, modern web application designed to help users practice for HR and Technical interviews using AI-driven mock sessions.",
+  "main": "index.js",
+  "scripts": {
+    "dev": "concurrently \"npm run dev --prefix backend\" \"npm run dev --prefix frontend\"",
+    "backend": "npm run dev --prefix backend",
+    "frontend": "npm run dev --prefix frontend",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/avy2025/MockMateAI.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/avy2025/MockMateAI/issues"
+  },
+  "homepage": "https://github.com/avy2025/MockMateAI#readme",
+  "devDependencies": {
+    "concurrently": "^10.0.3"
+  }
+}
