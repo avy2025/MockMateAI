@@ -1,6 +1,16 @@
+const dotenv = require('dotenv');
+
+// Load env vars FIRST — before any other require reads process.env
+dotenv.config();
+
+// ── Startup guards ────────────────────────────────────────────────────────────
+if (!process.env.JWT_SECRET) {
+  console.error('FATAL: JWT_SECRET environment variable is not set. Refusing to start.');
+  process.exit(1);
+}
+
 const express = require('express');
 const cors = require('cors');
-const dotenv = require('dotenv');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
@@ -17,11 +27,6 @@ const recruiterRoutes = require('./routes/recruiter');
 const interviewPlanRoutes = require('./routes/interviewPlan');
 const recordingsRoutes = require('./routes/recordings');
 const scheduleRoutes = require('./routes/schedule');
-
-
-
-// Load env vars
-dotenv.config();
 
 // Connect to database
 connectDB();
@@ -57,13 +62,22 @@ app.use('/api/recordings', recordingsRoutes);
 app.use('/api/schedule', scheduleRoutes);
 
 
-
-
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', service: 'MockMate AI Backend' });
+});
+
+// ── Global error handler ───────────────────────────────────────────────────────
+// Must have 4 params so Express treats it as an error handler
+// eslint-disable-next-line no-unused-vars
+app.use((err, req, res, next) => {
+  console.error('[Unhandled Error]', err);
+  const statusCode = err.statusCode || 500;
+  res.status(statusCode).json({
+    success: false,
+    error: process.env.NODE_ENV === 'production' ? 'Internal Server Error' : err.message,
+  });
 });
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
-
