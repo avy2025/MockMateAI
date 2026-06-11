@@ -17,7 +17,7 @@ router.post('/generate', async (req, res) => {
     return res.status(400).json({ error: 'Session ID and Role ID are required' });
   }
 
-  const session = getResumeSession(sessionId);
+  const session = await getResumeSession(sessionId);
   if (!session) {
     return res.status(404).json({ error: 'Session not found' });
   }
@@ -26,7 +26,7 @@ router.post('/generate', async (req, res) => {
     const plan = await generateInterviewPlan(roleId, session.insights);
     
     // Store the plan in the session for the chat logic to use
-    updateResumeSession(sessionId, { interviewPlan: plan, selectedRoleId: roleId });
+    await updateResumeSession(sessionId, { interviewPlan: plan, selectedRoleId: roleId });
 
     res.json({
       success: true,

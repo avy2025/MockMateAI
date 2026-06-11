@@ -37,7 +37,7 @@ class CopilotService {
     try {
       // 1. Ensure candidates are indexed
       for (const id of sessionIds) {
-        const report = getReport(id);
+        const report = await getReport(id);
         if (report && !knowledgeStore.candidatePool.has(id)) {
           // We need original transcript and resumeInsights which are in the report object
           await knowledgeStore.indexCandidate(
