@@ -17,7 +17,6 @@ router.post(
     body('name', 'Name is required').not().isEmpty(),
     body('email', 'Please include a valid email').isEmail(),
     body('password', 'Please enter a password with 6 or more characters').isLength({ min: 6 }),
-    body('role', 'Role must be candidate, recruiter, or admin').optional().isIn(['candidate', 'recruiter', 'admin']),
   ],
   async (req, res) => {
     const errors = validationResult(req);
@@ -38,7 +37,7 @@ router.post(
         name,
         email,
         password,
-        role: role || 'candidate',
+        role: 'candidate', // Never trust client-provided role on public registration
       });
 
       sendTokenResponse(user, 201, res);
@@ -107,7 +106,7 @@ router.get('/me', protect, async (req, res) => {
 // Get token from model, create cookie and send response
 const sendTokenResponse = (user, statusCode, res) => {
   // Create token
-  const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET || 'secret_mockmate_key', {
+  const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
     expiresIn: '30d',
   });
 
