@@ -29,6 +29,20 @@ router.post('/', protect, authorize('recruiter', 'admin'), async (req, res) => {
   try {
     const { candidateEmail, candidateName, scheduledDate, interviewType } = req.body;
 
+    if (!candidateEmail || !scheduledDate) {
+      return res.status(400).json({ success: false, error: 'candidateEmail and scheduledDate are required' });
+    }
+
+    const emailRegex = /^\S+@\S+\.\S+$/;
+    if (!emailRegex.test(candidateEmail)) {
+      return res.status(400).json({ success: false, error: 'Please provide a valid email' });
+    }
+
+    const dateObj = new Date(scheduledDate);
+    if (isNaN(dateObj.getTime()) || dateObj < new Date()) {
+      return res.status(400).json({ success: false, error: 'scheduledDate must be a valid future date' });
+    }
+
     const inviteToken = crypto.randomBytes(20).toString('hex');
 
     const schedule = await Schedule.create({

@@ -44,6 +44,10 @@ router.post('/upload/:sessionId', protect, upload.single('recording'), async (re
       return res.status(404).json({ error: 'Session not found.' });
     }
 
+    if (session.user.toString() !== req.user.id) {
+      return res.status(403).json({ error: 'Not authorized to upload to this session.' });
+    }
+
     const recording = await InterviewRecording.create({
       session: session._id,
       fileName: req.file.filename,
