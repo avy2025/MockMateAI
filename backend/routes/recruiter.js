@@ -2,12 +2,13 @@ const express = require('express');
 const router = express.Router();
 const { getAllReports, getReport } = require('../services/report/reportStore');
 const copilotService = require('../services/CopilotService');
+const { protect, authorize } = require('../middleware/auth');
 
 /**
  * POST /api/recruiter/copilot/chat
  * Handles conversational queries about candidates.
  */
-router.post('/copilot/chat', async (req, res) => {
+router.post('/copilot/chat', protect, authorize('recruiter', 'admin'), async (req, res) => {
   try {
     const { sessionIds, query, history } = req.body;
     
@@ -36,7 +37,7 @@ router.post('/copilot/chat', async (req, res) => {
  * GET /api/recruiter/metrics
  * Returns aggregated statistics for the dashboard.
  */
-router.get('/metrics', async (req, res) => {
+router.get('/metrics', protect, authorize('recruiter', 'admin'), async (req, res) => {
   try {
     const reports = await getAllReports();
     
@@ -79,8 +80,8 @@ router.get('/metrics', async (req, res) => {
       requiresImprovementCandidates: improvementCount,
       topSkills: topSkills.length > 0 ? topSkills : [
         { skill: 'React', count: 92 },
-        { skill: 'Communication', val: 85 },
-        { skill: 'Problem Solving', val: 78 }
+        { skill: 'Communication', count: 85 },
+        { skill: 'Problem Solving', count: 78 }
       ]
     });
   } catch (error) {
@@ -94,7 +95,7 @@ router.get('/metrics', async (req, res) => {
  * GET /api/recruiter/candidates
  * Returns a list of all candidates with summary data.
  */
-router.get('/candidates', async (req, res) => {
+router.get('/candidates', protect, authorize('recruiter', 'admin'), async (req, res) => {
   try {
     const reports = await getAllReports();
     const candidateList = reports.map(r => ({
@@ -119,7 +120,7 @@ router.get('/candidates', async (req, res) => {
  * GET /api/recruiter/compare
  * Returns detailed reports for multiple candidates based on sessionId.
  */
-router.get('/compare', async (req, res) => {
+router.get('/compare', protect, authorize('recruiter', 'admin'), async (req, res) => {
   try {
     const { ids } = req.query;
     if (!ids) {
