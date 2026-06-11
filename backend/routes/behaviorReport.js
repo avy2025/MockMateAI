@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const { protect } = require('../middleware/auth');
 
 /**
  * In-memory behavioral report store.
@@ -14,7 +15,7 @@ const InterviewSession = require('../models/InterviewSession');
  * POST /api/behavior-report
  * Body: { sessionId, report: { eyeContactScore, attentionStatus, ... , sessionLog } }
  */
-router.post('/', async (req, res) => {
+router.post('/', protect, async (req, res) => {
   try {
     const { sessionId, report } = req.body;
 

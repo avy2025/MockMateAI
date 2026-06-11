@@ -6,14 +6,10 @@ const {
   retrieveRelevantChunks,
   formatResumeContext,
 } = require('../utils/resumeContextRetriever');
+const { protect } = require('../middleware/auth');
 
 const apiKey = process.env.GEMINI_API_KEY;
-if (!apiKey || apiKey === 'YOUR_API_KEY_HERE') {
-  console.warn(
-    'WARNING: GEMINI_API_KEY is missing or using placeholder. AI features will be limited.'
-  );
-}
-const genAI = new GoogleGenerativeAI(apiKey || 'MOCK_KEY');
+const genAI = new GoogleGenerativeAI(apiKey);
 
 function buildInterviewPrompt({
   interviewType,
@@ -109,7 +105,7 @@ ${scoringBlock}`;
 
 const InterviewSession = require('../models/InterviewSession');
 
-router.post('/', async (req, res) => {
+router.post('/', protect, async (req, res) => {
   try {
     const { message, history, interviewType, sessionId } = req.body;
 
@@ -159,23 +155,23 @@ router.post('/', async (req, res) => {
       interviewPlan
     });
 
+    let isFallbackResponse = false;
     let responseText;
     try {
       const result = await model.generateContent(prompt);
       responseText = result.response.text();
     } catch (apiError) {
       console.error('Gemini API Error:', apiError.message);
+      isFallbackResponse = true;
       responseText = JSON.stringify({
         reply: resumeContextBlock
           ? "I see strong professional experience on your resume. Walk me through the architecture of your most significant project and the technical decisions you made that align with this role."
           : "That's a solid point. Can you explain how you handle complex technical challenges in this field?",
         evaluation: {
-          score: 8,
-          strengths: ['Clear articulation of experience', 'Technical relevance'],
-          weaknesses: ['Could be more specific about project impact'],
-          improvements: [
-            'Provide more quantitative data where possible',
-          ],
+          score: null, // null signals this is a fallback — not a real score
+          strengths: [],
+          weaknesses: [],
+          improvements: [],
         },
       });
     }
@@ -199,8 +195,8 @@ router.post('/', async (req, res) => {
       };
     }
 
-    // Persist transcript to DB if session exists
-    if (sessionId) {
+    // Persist transcript to DB only if session exists and response is not a fallback
+    if (sessionId && !isFallbackResponse) {
       try {
         await InterviewSession.findOneAndUpdate(
           { sessionId },

@@ -3,6 +3,7 @@ const router = express.Router();
 const { getResumeSession } = require('../services/resumeSessionStore');
 const ReportGenerator = require('../services/report/ReportGenerator');
 const { saveReport, getReport } = require('../services/report/reportStore');
+const { protect } = require('../middleware/auth');
 
 const apiKey = process.env.GEMINI_API_KEY;
 const generator = new ReportGenerator(apiKey);
@@ -11,7 +12,7 @@ const generator = new ReportGenerator(apiKey);
  * POST /api/report/generate
  * Generates a report and saves it.
  */
-router.post('/generate', async (req, res) => {
+router.post('/generate', protect, async (req, res) => {
   try {
     const { sessionId, chatHistory, behaviorReport, interviewType } = req.body;
 
