@@ -74,6 +74,8 @@ router.post('/', protect, resumeUpload.single('resume'), async (req, res) => {
       insights,
     }, req.user.id);
 
+    // Clean up uploaded file since we've extracted everything we need
+    removeUploadedFile(filePath);
 
     res.json({
       success: true,
