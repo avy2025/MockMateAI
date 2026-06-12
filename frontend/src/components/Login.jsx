@@ -38,7 +38,6 @@ const Login = () => {
         borderRadius: '24px',
         boxShadow: '0 20px 50px rgba(56, 25, 50, 0.1)',
         width: '100%',
-        maxSize: '400px',
         maxWidth: '450px'
       }}>
         <div style={{ textAlign: 'center', marginBottom: '30px' }}>
