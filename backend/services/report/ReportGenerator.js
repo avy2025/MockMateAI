@@ -10,7 +10,7 @@ class ReportGenerator {
   }
 
   async generate(data) {
-    const { 
+    let { 
       sessionId, 
       chatHistory, 
       behaviorReport, 
@@ -19,6 +19,8 @@ class ReportGenerator {
       candidateName,
       interviewPlan
     } = data;
+
+    behaviorReport = behaviorReport || {};
 
     const targetRole = interviewPlan?.role || interviewType || 'Professional Role';
 
