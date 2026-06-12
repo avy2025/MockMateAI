@@ -2,6 +2,9 @@ const InterviewSession = require('../models/InterviewSession');
 const Resume = require('../models/Resume');
 const crypto = require('crypto');
 
+// Map to store chunks in memory for active sessions (temporary since we don't have a vector DB yet)
+const chunkCache = new Map();
+
 /**
  * @param {object} data
  * @param {string} userId
@@ -13,7 +16,7 @@ async function createResumeSession(data, userId) {
   // Create Resume entry first if not exists
   const resume = await Resume.create({
     user: userId,
-    fileName: data.fileName,
+    fileName: data.filename, // matched with caller, was data.fileName
     filePath: data.filePath,
     insights: data.insights
   });
@@ -26,6 +29,10 @@ async function createResumeSession(data, userId) {
     resume: resume._id,
     startedAt: new Date()
   });
+
+  if (data.chunks) {
+    chunkCache.set(sessionId, data.chunks);
+  }
 
   return sessionId;
 }
@@ -45,7 +52,9 @@ async function getResumeSession(sessionId) {
       interviewType: session.interviewType,
       candidateName: session.candidateName,
       status: session.status,
-      createdAt: session.startedAt
+      createdAt: session.startedAt,
+      chunks: chunkCache.get(session.sessionId) || [],
+      interviewPlan: session.interviewPlan
     };
   } catch (error) {
     console.error('Error getting resume session:', error);
