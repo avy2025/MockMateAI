@@ -11,7 +11,18 @@ export const AuthProvider = ({ children }) => {
     const storedUser = localStorage.getItem('user');
     const token = localStorage.getItem('token');
     if (storedUser && token) {
-      setUser(JSON.parse(storedUser));
+      try {
+        const decoded = JSON.parse(atob(token.split('.')[1]));
+        if (decoded.exp * 1000 > Date.now()) {
+          setUser(JSON.parse(storedUser));
+        } else {
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+        }
+      } catch (err) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+      }
     }
     setLoading(false);
   }, []);
