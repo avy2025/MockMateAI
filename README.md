@@ -85,8 +85,38 @@ graph TD
 - Node.js (v18 or higher recommended)
 - MongoDB running locally or a valid MongoDB Atlas URI
 - npm or yarn package managers
+- **Docker and Docker Compose** (Optional, but recommended for easy setup)
 
-### Installation
+### Docker Setup (Recommended)
+
+The easiest way to run MockMate AI locally is using Docker. This will automatically set up the frontend, backend, and a persistent MongoDB database.
+
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/your-username/MockMateAI.git
+   cd MockMateAI
+   ```
+
+2. **Set up Environment Variables**:
+   Copy the example environment files for both backend and frontend:
+   ```bash
+   cp backend/.env.example backend/.env
+   cp frontend/.env.example frontend/.env
+   ```
+   *Note: Open `backend/.env` and add your required secrets such as `GEMINI_API_KEY` and `JWT_SECRET`.*
+
+3. **Start the application**:
+   ```bash
+   docker compose up --build
+   ```
+
+The application will now be running:
+- Frontend: `http://localhost:5173`
+- Backend API: `http://localhost:5000`
+
+---
+
+### Manual Installation (Without Docker)
 
 1. **Clone the repository**:
    ```bash
