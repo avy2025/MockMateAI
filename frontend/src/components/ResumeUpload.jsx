@@ -13,6 +13,8 @@ const ResumeUpload = ({ interviewType, onUploadSuccess, onBack }) => {
   const [insights, setInsights] = useState(null);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [signedUrl, setSignedUrl] = useState('');
   const fileInputRef = useRef(null);
 
   const allowedTypes = [
@@ -79,10 +81,13 @@ const ResumeUpload = ({ interviewType, onUploadSuccess, onBack }) => {
     if (!file) return;
 
     setUploadState('uploading');
+    setUploadProgress(0);
     setErrorMessage('');
 
     try {
-      const data = await uploadResume(file);
+      const data = await uploadResume(file, (progress) => {
+        setUploadProgress(progress);
+      });
 
       if (data.success) {
         setUploadState('success');
@@ -91,6 +96,7 @@ const ResumeUpload = ({ interviewType, onUploadSuccess, onBack }) => {
         setSessionId(data.sessionId || '');
         setChunks(data.chunks || []);
         setInsights(data.insights || null);
+        setSignedUrl(data.signedUrl || '');
         setPreviewOpen(false);
       } else {
         setUploadState('error');
@@ -111,6 +117,7 @@ const ResumeUpload = ({ interviewType, onUploadSuccess, onBack }) => {
     setChunks([]);
     setInsights(null);
     setPreviewOpen(false);
+    setSignedUrl('');
     setErrorMessage('');
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
@@ -296,6 +303,12 @@ const ResumeUpload = ({ interviewType, onUploadSuccess, onBack }) => {
                 </div>
               )}
 
+              {signedUrl && (
+                <div style={styles.documentPreviewSection}>
+                  <iframe src={signedUrl} style={styles.iframePreview} title="Resume Document Preview" />
+                </div>
+              )}
+
               <button
                 onClick={handleRemoveFile}
                 style={styles.changeFileBtn}
@@ -321,10 +334,12 @@ const ResumeUpload = ({ interviewType, onUploadSuccess, onBack }) => {
                 }}
               >
                 {uploadState === 'uploading' ? (
-                  <span style={styles.loadingContent}>
-                    <span style={styles.spinner}></span>
-                    Analyzing resume...
-                  </span>
+                  <div style={styles.progressContainer}>
+                    <div style={{...styles.progressBar, width: `${uploadProgress}%`}}></div>
+                    <span style={styles.progressText}>Uploading... {uploadProgress}%</span>
+                  </div>
+                ) : uploadState === 'error' ? (
+                  'Retry Upload'
                 ) : (
                   'Upload Resume'
                 )}
@@ -723,6 +738,47 @@ const styles = {
     borderTopColor: '#FFF3E6',
     borderRadius: '50%',
     animation: 'spin 0.6s linear infinite',
+  },
+  progressContainer: {
+    width: '100%',
+    height: '24px',
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    borderRadius: '12px',
+    overflow: 'hidden',
+    position: 'relative',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+  progressBar: {
+    height: '100%',
+    backgroundColor: '#ffb86c', // Using a distinct color to stand out inside the button
+    position: 'absolute',
+    left: '0',
+    top: '0',
+    transition: 'width 0.2s ease',
+    zIndex: 1,
+  },
+  progressText: {
+    position: 'relative',
+    zIndex: 2,
+    fontSize: '0.9rem',
+    color: '#FFF',
+    fontWeight: '600',
+    textShadow: '0px 1px 2px rgba(0,0,0,0.3)'
+  },
+  documentPreviewSection: {
+    width: '100%',
+    marginTop: '16px',
+    marginBottom: '16px',
+    textAlign: 'center',
+  },
+  iframePreview: {
+    width: '100%',
+    height: '400px',
+    border: '1px solid rgba(56, 25, 50, 0.08)',
+    borderRadius: '12px',
+    backgroundColor: '#f9f9f9'
   },
 
   // Footer
