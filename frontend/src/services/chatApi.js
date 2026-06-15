@@ -1,3 +1,4 @@
+import axios from 'axios';
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 /**
@@ -99,22 +100,28 @@ export async function generateInterviewPlan(payload) {
 /**
  * Upload interview recording.
  */
-export async function uploadRecording(sessionId, blob) {
+export async function uploadRecording(sessionId, blob, onProgress) {
   const formData = new FormData();
   formData.append('recording', blob, `recording-${sessionId}.webm`);
 
-  const token = localStorage.getItem('token');
-  const res = await fetch(`${API_BASE}/api/recordings/upload/${sessionId}`, {
-    method: 'POST',
-    headers: token ? { 'Authorization': `Bearer ${token}` } : {},
-    body: formData,
-  });
+  const headers = getHeaders({ 'Content-Type': 'multipart/form-data' });
 
-  if (!res.ok) {
-    throw new Error('Recording upload failed');
+  try {
+    const res = await axios.post(`${API_BASE}/api/recordings/upload/${sessionId}`, formData, {
+      headers,
+      onUploadProgress: (progressEvent) => {
+        const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+        if (onProgress) onProgress(percentCompleted);
+      }
+    });
+
+    return res.data;
+  } catch (err) {
+    if (err.response && err.response.data) {
+      throw new Error(err.response.data.error || 'Recording upload failed');
+    }
+    throw err;
   }
-
-  return res.json();
 }
 
 /**
