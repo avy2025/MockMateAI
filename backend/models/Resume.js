@@ -6,8 +6,13 @@ const resumeSchema = new mongoose.Schema({
     ref: 'User',
     required: true,
   },
-  fileName: String,
-  filePath: String,
+  fileUrl: String,
+  storageKey: String,
+  fileType: String,
+  uploadedAt: {
+    type: Date,
+    default: Date.now,
+  },
   insights: {
     personalInfo: Object,
     skills: [String],
