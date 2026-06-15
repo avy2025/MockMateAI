@@ -56,11 +56,13 @@ async function extractDocxText(source) {
 
 /**
  * Extract text from a resume file based on its extension.
- * @param {string} filePath - Absolute path to uploaded file
+ * @param {Buffer|string} source - Absolute path to uploaded file or File buffer
+ * @param {string} [fileName] - Optional file name used to deduce extension if source is a buffer
  * @returns {Promise<string>}
  */
-async function extractResumeText(filePath) {
-  const ext = path.extname(filePath).toLowerCase();
+async function extractResumeText(source, fileName) {
+  const nameToUse = fileName || (typeof source === 'string' ? source : '');
+  const ext = path.extname(nameToUse).toLowerCase();
 
   if (!SUPPORTED_EXTENSIONS.includes(ext)) {
     const error = new Error('Only PDF and DOCX files are supported.');
@@ -69,10 +71,10 @@ async function extractResumeText(filePath) {
   }
 
   if (ext === '.pdf') {
-    return extractPdfText(filePath);
+    return extractPdfText(source);
   }
 
-  return extractDocxText(filePath);
+  return extractDocxText(source);
 }
 
 module.exports = {

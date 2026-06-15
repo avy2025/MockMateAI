@@ -1,24 +1,22 @@
 const express = require('express');
 const multer = require('multer');
+const multerS3 = require('multer-s3');
 const path = require('path');
-const fs = require('fs');
 const InterviewRecording = require('../models/InterviewRecording');
 const InterviewSession = require('../models/InterviewSession');
 const { protect } = require('../middleware/auth');
+const { s3Client, bucketName, getSignedUrl } = require('../services/storageService');
 
 const router = express.Router();
 
-// Setup storage
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    const dir = 'uploads/recordings';
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-    }
-    cb(null, dir);
-  },
-  filename: function (req, file, cb) {
-    cb(null, `recording-${req.params.sessionId}-${Date.now()}${path.extname(file.originalname)}`);
+// Setup cloud storage for recordings
+const storage = multerS3({
+  s3: s3Client,
+  bucket: bucketName,
+  contentType: multerS3.AUTO_CONTENT_TYPE,
+  key: function (req, file, cb) {
+    const ext = path.extname(file.originalname) || '.webm';
+    cb(null, `recordings/recording-${req.params.sessionId}-${Date.now()}${ext}`);
   },
 });
 
@@ -50,17 +48,17 @@ router.post('/upload/:sessionId', protect, upload.single('recording'), async (re
 
     const recording = await InterviewRecording.create({
       session: session._id,
-      fileName: req.file.filename,
-      filePath: req.file.path,
+      fileUrl: req.file.location,
+      storageKey: req.file.key,
+      fileType: req.file.mimetype,
       fileSize: req.file.size,
-      mimeType: req.file.mimetype,
       duration: req.body.duration || 0,
     });
 
     session.recording = recording._id;
     await session.save();
 
-    res.json({ success: true, recordingId: recording._id });
+    res.json({ success: true, recordingId: recording._id, fileUrl: req.file.location });
   } catch (error) {
     console.error('Recording Upload Error:', error);
     res.status(500).json({ error: 'Internal Server Error' });
@@ -69,7 +67,7 @@ router.post('/upload/:sessionId', protect, upload.single('recording'), async (re
 
 /**
  * GET /api/recordings/:sessionId
- * Serves the recording file for the session.
+ * Serves the recording file for the session via Signed URL redirection.
  */
 router.get('/:sessionId', protect, async (req, res) => {
   try {
@@ -80,12 +78,15 @@ router.get('/:sessionId', protect, async (req, res) => {
       return res.status(404).json({ error: 'Recording not found.' });
     }
 
-    const filePath = path.resolve(session.recording.filePath);
-    if (!fs.existsSync(filePath)) {
-      return res.status(404).json({ error: 'File not found on server.' });
+    if (!session.recording.storageKey) {
+      return res.status(404).json({ error: 'File not found on cloud storage.' });
     }
 
-    res.sendFile(filePath);
+    // Generate a pre-signed URL to privately access the S3 object
+    const signedUrl = await getSignedUrl(session.recording.storageKey, 3600); // 1-hour expiration
+
+    // Redirect the client to the S3 URL to stream the media securely
+    res.redirect(signedUrl);
   } catch (error) {
     console.error('Recording Fetch Error:', error);
     res.status(500).json({ error: 'Internal Server Error' });
