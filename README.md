@@ -165,4 +165,4 @@ JWT_SECRET=your_super_secret_jwt_key
 - Voice-to-Text inference to power hands-free candidate interviews.
 
 ---
-*Created with ❤️ by Antigravity*
+
