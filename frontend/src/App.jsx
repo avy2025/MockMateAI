@@ -177,15 +177,18 @@ function LoadingScreen() {
     </div>
   );
 }
+import { SocketProvider } from './context/SocketContext';
 
 function App() {
   return (
     <AuthProvider>
-      <Router>
-        <div className="App">
-          <MainApp />
-        </div>
-      </Router>
+      <SocketProvider>
+        <Router>
+          <div className="App">
+            <MainApp />
+          </div>
+        </Router>
+      </SocketProvider>
     </AuthProvider>
   );
 }
