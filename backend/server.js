@@ -9,14 +9,28 @@ if (!process.env.JWT_SECRET) {
   process.exit(1);
 }
 
+const http = require('http');
+const { Server } = require('socket.io');
 const connectDB = require('./config/db');
 const app = require('./app');
+const initSocketManager = require('./socket/socketManager');
 
 // Connect to database
 connectDB();
 
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: '*', // Adjust for production
+    methods: ['GET', 'POST']
+  }
+});
+
+// Initialize Socket Manager
+initSocketManager(io);
+
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
