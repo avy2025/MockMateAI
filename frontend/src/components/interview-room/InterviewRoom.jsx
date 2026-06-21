@@ -3,7 +3,7 @@ import { useWebcam } from '../../hooks/useWebcam';
 import { useSpeechRecognition } from '../../hooks/useSpeechRecognition';
 import { useTextToSpeech } from '../../hooks/useTextToSpeech';
 import { useBehaviorAnalysis } from '../../hooks/useBehaviorAnalysis';
-import { sendChatMessage, uploadRecording } from '../../services/chatApi';
+import { uploadRecording } from '../../services/chatApi';
 import InterviewHeader from './InterviewHeader';
 import AIInterviewerPanel from './AIInterviewerPanel';
 import CandidatePanel from './CandidatePanel';
@@ -14,21 +14,28 @@ import IntegritySidebar from './IntegritySidebar';
 import BehaviorAlertToast from './BehaviorAlertToast';
 import { useIntegrityMonitoring } from '../../hooks/useIntegrityMonitoring';
 import { useMediaRecording } from '../../hooks/useMediaRecording';
+import { useInterviewSocket } from '../../hooks/useInterviewSocket';
 import '../../styles/interview-room.css';
 import '../../styles/behavior-analysis.css';
 
 function InterviewRoom({ interviewType, resumeContext, onEndInterview }) {
   const sessionId = resumeContext?.sessionId;
-  const isLoadingRef = useRef(false);
   const isSpeakingRef = useRef(false);
-  const messagesRef = useRef([]);
 
-  const [messages, setMessages] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [currentQuestion, setCurrentQuestion] = useState('');
   const [voiceNotice, setVoiceNotice] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [integritySidebarOpen, setIntegritySidebarOpen] = useState(false);
+
+  // WebSocket Hook
+  const {
+    transcript: socketTranscript,
+    lastQuestion,
+    lastEvaluation,
+    isProcessing,
+    sendAnswer,
+    sendAnalytics,
+    isConnected: socketConnected
+  } = useInterviewSocket(sessionId, interviewType);
 
   // Recording Hook
   const { startRecording, stopRecording, recordingBlob } = useMediaRecording();
@@ -64,6 +71,13 @@ function InterviewRoom({ interviewType, resumeContext, onEndInterview }) {
     cameraOn,
   });
 
+  // Sync behavioral analytics to server in real-time
+  useEffect(() => {
+    if (behaviorMetrics && socketConnected) {
+      sendAnalytics(behaviorMetrics);
+    }
+  }, [behaviorMetrics, socketConnected, sendAnalytics]);
+
   // Integrity monitoring — tracks tab switches, focus, and multi-face signals
   const { integrityMetrics, getIntegrityReport } = useIntegrityMonitoring({
     isSpeaking,
@@ -78,60 +92,31 @@ function InterviewRoom({ interviewType, resumeContext, onEndInterview }) {
     });
   }, [onAlert]);
 
+  // Handle incoming AI questions
+  useEffect(() => {
+    if (lastQuestion?.reply) {
+      speak(lastQuestion.reply, {
+        onEnd: () => {
+          if (!isProcessing) {
+            speechRef.current?.startListening();
+          }
+        },
+      });
+    }
+  }, [lastQuestion, speak, isProcessing]);
+
   const submitAnswer = useCallback(
-    async (text) => {
+    (text) => {
       const trimmed = text?.trim();
-      if (!trimmed || isLoadingRef.current) return;
+      if (!trimmed || isProcessing) return;
 
       speechRef.current?.stopListening();
       speechRef.current?.resetTranscript();
 
-      isLoadingRef.current = true;
-      setIsLoading(true);
       setVoiceNotice(null);
-
-      const userMessage = { role: 'user', content: trimmed };
-      const historyForBackend = [...messagesRef.current, userMessage];
-      messagesRef.current = historyForBackend;
-      setMessages(historyForBackend);
-
-      try {
-        const data = await sendChatMessage({
-          message: trimmed,
-          history: historyForBackend,
-          interviewType,
-          sessionId,
-        });
-
-        const updatedMessages = historyForBackend.map((msg, idx) => {
-          if (idx === historyForBackend.length - 1) {
-            return { ...msg, evaluation: data.evaluation };
-          }
-          return msg;
-        });
-
-        const aiMessage = { role: 'model', content: data.reply };
-        const nextMessages = [...updatedMessages, aiMessage];
-        messagesRef.current = nextMessages;
-        setMessages(nextMessages);
-        setCurrentQuestion(data.reply);
-
-        speak(data.reply, {
-          onEnd: () => {
-            if (!isLoadingRef.current) {
-              speechRef.current?.startListening();
-            }
-          },
-        });
-      } catch (err) {
-        console.error('Interview chat error:', err);
-        setVoiceNotice('Lost connection. Please check your server and try again.');
-      } finally {
-        isLoadingRef.current = false;
-        setIsLoading(false);
-      }
+      sendAnswer(trimmed);
     },
-    [interviewType, sessionId, speak],
+    [sendAnswer, isProcessing],
   );
 
   const handleSilence = useCallback(
@@ -150,16 +135,8 @@ function InterviewRoom({ interviewType, resumeContext, onEndInterview }) {
   speechRef.current = speech;
 
   useEffect(() => {
-    isLoadingRef.current = isLoading;
-  }, [isLoading]);
-
-  useEffect(() => {
     isSpeakingRef.current = isSpeaking;
   }, [isSpeaking]);
-
-  useEffect(() => {
-    messagesRef.current = messages;
-  }, [messages]);
 
   useEffect(() => {
     if (speech.error) {
@@ -167,59 +144,13 @@ function InterviewRoom({ interviewType, resumeContext, onEndInterview }) {
     }
   }, [speech.error]);
 
+  // Clean up on unmount
   useEffect(() => {
-    let cancelled = false;
-
-    const startInterview = async () => {
-      isLoadingRef.current = true;
-      setIsLoading(true);
-      setVoiceNotice(null);
-
-      try {
-        const data = await sendChatMessage({
-          message: 'Hello, please start the interview.',
-          history: [],
-          interviewType,
-          sessionId,
-        });
-
-        if (cancelled) return;
-
-        const firstMessage = { role: 'model', content: data.reply };
-        messagesRef.current = [firstMessage];
-        setMessages([firstMessage]);
-        setCurrentQuestion(data.reply);
-
-        speak(data.reply, {
-          onEnd: () => {
-            if (!cancelled && !isLoadingRef.current) {
-              speechRef.current?.startListening();
-            }
-          },
-        });
-      } catch (err) {
-        console.error('Failed to start interview:', err);
-        if (!cancelled) {
-          setVoiceNotice(
-            "Unable to connect to the interview server. Is the backend running?",
-          );
-        }
-      } finally {
-        if (!cancelled) {
-          isLoadingRef.current = false;
-          setIsLoading(false);
-        }
-      }
-    };
-
-    startInterview();
-
     return () => {
-      cancelled = true;
       stopSpeaking();
       speechRef.current?.stopListening();
     };
-  }, [interviewType, sessionId, speak, stopSpeaking]);
+  }, [stopSpeaking]);
 
   const handleToggleVoice = useCallback(() => {
     if (isSpeaking) {
@@ -231,7 +162,7 @@ function InterviewRoom({ interviewType, resumeContext, onEndInterview }) {
       return;
     }
 
-    if (isLoading) return;
+    if (isProcessing) return;
 
     if (!speech.isSupported) {
       setVoiceNotice('Speech recognition is not supported in this browser. Try Chrome or Edge.');
@@ -261,7 +192,7 @@ function InterviewRoom({ interviewType, resumeContext, onEndInterview }) {
       timeAwayMs: integrityReport.timeAwayMs,
     };
 
-    onEndInterview(finalReport, messagesRef.current);
+    onEndInterview(finalReport, socketTranscript);
   };
 
   // Upload recording when blob is ready
@@ -284,13 +215,12 @@ function InterviewRoom({ interviewType, resumeContext, onEndInterview }) {
 
       {/* Critical behavioral alert toasts — top-right, non-intrusive */}
       <BehaviorAlertToast alertRef={alertToastRef} />
-
       <main className="interview-room__stage">
         <AIInterviewerPanel
           isActive
           isSpeaking={isSpeaking}
-          currentQuestion={currentQuestion}
-          isLoading={isLoading && !isSpeaking}
+          currentQuestion={lastQuestion?.reply || ''}
+          isLoading={isProcessing && !isSpeaking}
         />
         <CandidatePanel
           videoRef={videoRef}
@@ -305,11 +235,12 @@ function InterviewRoom({ interviewType, resumeContext, onEndInterview }) {
       <VoiceTranscriptPanel
         isListening={speech.isListening}
         isSpeaking={isSpeaking}
-        isProcessing={isLoading}
+        isProcessing={isProcessing}
         displayTranscript={speech.displayTranscript}
-        currentQuestion={currentQuestion}
+        currentQuestion={lastQuestion?.reply || ''}
         error={combinedError}
         isSupported={speech.isSupported && ttsSupported}
+        transcript={socketTranscript}
       />
 
       <ControlBar
@@ -318,7 +249,7 @@ function InterviewRoom({ interviewType, resumeContext, onEndInterview }) {
         onToggleVoice={handleToggleVoice}
         onToggleCamera={toggleCamera}
         onEndInterview={handleEndInterview}
-        voiceDisabled={isLoading || isSpeaking}
+        voiceDisabled={isProcessing || isSpeaking}
       />
 
       {/* Behavior Analysis slide-out sidebar — collapsed by default */}
