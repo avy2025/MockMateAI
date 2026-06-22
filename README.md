@@ -140,9 +140,13 @@ The application will now be running:
 Create a `.env` file in the `backend` directory containing the following environment variables:
 ```env
 PORT=5000
-MONGO_URI=mongodb://localhost:27017/mockmateai
+MONGODB_URI=mongodb://localhost:27017/mockmate_ai
 JWT_SECRET=your_super_secret_jwt_key
+USE_LOCAL_STORAGE=true  # Set to true to use JSON files instead of MongoDB
 ```
+
+> [!TIP]
+> **Zero-Database Mode**: Setting `USE_LOCAL_STORAGE=true` enables a specialized mode where all data (Users, Sessions, Resumes) is stored in local JSON files under `backend/data/local/`. This is perfect for quick testing or development environments where a MongoDB server is not available.
 
 ### Running the Application
 
