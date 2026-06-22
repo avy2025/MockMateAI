@@ -34,19 +34,44 @@ const userSchema = new mongoose.Schema({
   },
 });
 
-// Encrypt password using bcrypt
-userSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) {
+const MockModel = require('./mockModel');
+
+let User;
+
+if (process.env.USE_LOCAL_STORAGE === 'true') {
+  User = new MockModel('User', userSchema);
+  
+  // Attach hooks
+  User.pre('save', async function (next) {
+    if (!this.password) return next();
+    
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
     next();
-  }
+  });
 
-  const salt = await bcrypt.genSalt(10);
-  this.password = await bcrypt.hash(this.password, salt);
-});
+  // Attach methods
+  User.methods.matchPassword = async function (enteredPassword) {
+    return await bcrypt.compare(enteredPassword, this.password);
+  };
+} else {
+  // Encrypt password using bcrypt
+  userSchema.pre('save', async function (next) {
+    if (!this.isModified('password')) {
+      next();
+    }
 
-// Match user entered password to hashed password in database
-userSchema.methods.matchPassword = async function (enteredPassword) {
-  return await bcrypt.compare(enteredPassword, this.password);
-};
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
+  });
 
-module.exports = mongoose.model('User', userSchema);
+  // Match user entered password to hashed password in database
+  userSchema.methods.matchPassword = async function (enteredPassword) {
+    return await bcrypt.compare(enteredPassword, this.password);
+  };
+
+  User = mongoose.model('User', userSchema);
+}
+
+module.exports = User;
+

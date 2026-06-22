@@ -31,4 +31,6 @@ const scheduleSchema = new mongoose.Schema({
   },
 });
 
-module.exports = mongoose.model('Schedule', scheduleSchema);
+const createModel = require('./modelFactory');
+
+module.exports = createModel('Schedule', scheduleSchema);

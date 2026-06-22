@@ -52,4 +52,6 @@ const interviewSessionSchema = new mongoose.Schema({
   completedAt: Date,
 });
 
-module.exports = mongoose.model('InterviewSession', interviewSessionSchema);
+const createModel = require('./modelFactory');
+
+module.exports = createModel('InterviewSession', interviewSessionSchema);

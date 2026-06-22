@@ -26,4 +26,6 @@ const resumeSchema = new mongoose.Schema({
   },
 });
 
-module.exports = mongoose.model('Resume', resumeSchema);
+const createModel = require('./modelFactory');
+
+module.exports = createModel('Resume', resumeSchema);

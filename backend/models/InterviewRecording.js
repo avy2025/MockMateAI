@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const createModel = require('./modelFactory');
 
 const interviewRecordingSchema = new mongoose.Schema({
   session: {
@@ -22,4 +23,5 @@ const interviewRecordingSchema = new mongoose.Schema({
   },
 });
 
-module.exports = mongoose.model('InterviewRecording', interviewRecordingSchema);
+module.exports = createModel('InterviewRecording', interviewRecordingSchema);
+

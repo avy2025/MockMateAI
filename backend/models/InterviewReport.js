@@ -32,4 +32,6 @@ const interviewReportSchema = new mongoose.Schema({
   },
 });
 
-module.exports = mongoose.model('InterviewReport', interviewReportSchema);
+const createModel = require('./modelFactory');
+
+module.exports = createModel('InterviewReport', interviewReportSchema);
