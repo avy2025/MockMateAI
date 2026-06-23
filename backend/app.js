@@ -1,8 +1,13 @@
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
-const morgan = require('morgan');
+const pinoHttp = require('pino-http');
+const swaggerUi = require('swagger-ui-express');
 const rateLimit = require('express-rate-limit');
+
+const logger = require('./utils/logger');
+const swaggerSpec = require('./config/swagger');
+const errorMiddleware = require('./middleware/errorMiddleware');
 
 // Route files
 const authRoutes = require('./routes/auth');
@@ -22,9 +27,13 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 app.use(helmet()); // Set security headers
-if (process.env.NODE_ENV === 'development') {
-  app.use(morgan('dev')); // Logging
-}
+
+// Structured Logging
+app.use(pinoHttp({ 
+  logger,
+  // Custom request ID generation
+  genReqId: (req) => req.headers['x-request-id'] || require('crypto').randomUUID(),
+}));
 
 // Rate limiting
 const limiter = rateLimit({
@@ -32,6 +41,9 @@ const limiter = rateLimit({
   max: 100
 });
 app.use('/api/auth', limiter);
+
+// Swagger Documentation
+app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Mount routers
 app.use('/api/auth', authRoutes);
@@ -45,23 +57,11 @@ app.use('/api/interview-plan', interviewPlanRoutes);
 app.use('/api/recordings', recordingsRoutes);
 app.use('/api/schedule', scheduleRoutes);
 
-
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', service: 'MockMate AI Backend' });
 });
 
-// ── Global error handler ───────────────────────────────────────────────────────
-// Must have 4 params so Express treats it as an error handler
-// eslint-disable-next-line no-unused-vars
-app.use((err, req, res, next) => {
-  if (process.env.NODE_ENV !== 'test') {
-    console.error('[Unhandled Error]', err);
-  }
-  const statusCode = err.statusCode || 500;
-  res.status(statusCode).json({
-    success: false,
-    error: process.env.NODE_ENV === 'production' ? 'Internal Server Error' : err.message,
-  });
-});
+// Centralized Error Handler
+app.use(errorMiddleware);
 
 module.exports = app;
