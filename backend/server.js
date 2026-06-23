@@ -5,10 +5,11 @@ dotenv.config();
 
 // ── Startup guards ────────────────────────────────────────────────────────────
 if (!process.env.JWT_SECRET) {
-  console.error('FATAL: JWT_SECRET environment variable is not set. Refusing to start.');
+  logger.error('FATAL: JWT_SECRET environment variable is not set. Refusing to start.');
   process.exit(1);
 }
 
+const logger = require('./utils/logger');
 const http = require('http');
 const { Server } = require('socket.io');
 const connectDB = require('./config/db');
@@ -32,5 +33,5 @@ initSocketManager(io);
 const PORT = process.env.PORT || 5000;
 
 server.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  logger.info(`Server running on port ${PORT}`);
 });
