@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const interviewSocketHandlers = require('./interviewSocket');
+const logger = require('../utils/logger');
 
 const initSocketManager = (io) => {
   // Middleware for JWT authentication
@@ -20,13 +21,21 @@ const initSocketManager = (io) => {
   });
 
   io.on('connection', (socket) => {
-    console.log(`User connected: ${socket.user.id} (Socket: ${socket.id})`);
+    logger.info({
+      msg: 'User connected via socket',
+      userId: socket.user.id,
+      socketId: socket.id
+    });
 
     // Register interview handlers
     interviewSocketHandlers(io, socket);
 
     socket.on('disconnect', () => {
-      console.log(`User disconnected: ${socket.user.id}`);
+      logger.info({
+        msg: 'User disconnected from socket',
+        userId: socket.user.id,
+        socketId: socket.id
+      });
     });
   });
 };

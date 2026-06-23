@@ -1,11 +1,17 @@
 const { generateInterviewResponse } = require('../services/interviewService');
+const logger = require('../utils/logger');
 
 const interviewSocketHandlers = (io, socket) => {
   // Listen for starting an interview
   socket.on('interview:start', async (data) => {
     try {
       const { interviewType, sessionId } = data;
-      console.log(`Starting interview for user ${socket.user.id}, session ${sessionId}`);
+      logger.info({
+        msg: 'Starting interview session via socket',
+        userId: socket.user.id,
+        sessionId,
+        interviewType
+      });
 
       // Generate the first question
       const result = await generateInterviewResponse({
@@ -24,7 +30,7 @@ const interviewSocketHandlers = (io, socket) => {
         role: result.role
       });
     } catch (error) {
-      console.error('Socket Interview Start Error:', error);
+      logger.error({ msg: 'Socket Interview Start Error', error, sessionId: data?.sessionId });
       socket.emit('error', { message: 'Failed to start interview' });
     }
   });
@@ -57,7 +63,7 @@ const interviewSocketHandlers = (io, socket) => {
       socket.emit('transcript:update', { role: 'interviewer', content: result.reply });
 
     } catch (error) {
-      console.error('Socket Interview Answer Error:', error);
+      logger.error({ msg: 'Socket Interview Answer Error', error, sessionId: data?.sessionId });
       socket.emit('error', { message: 'Failed to process answer' });
     }
   });
@@ -71,12 +77,12 @@ const interviewSocketHandlers = (io, socket) => {
     
     // Also echo to sender if needed? Usually sender has this data.
     // For live behavioral analytics, we might just process it here.
-    console.log(`Analytics for session ${sessionId}:`, analytics);
+    logger.debug({ msg: `Analytics for session ${sessionId}`, sessionId, analytics });
   });
 
   socket.on('interview:end', (data) => {
     const { sessionId } = data;
-    console.log(`Ending interview session ${sessionId}`);
+    logger.info({ msg: `Ending interview session ${sessionId}`, sessionId, userId: socket.user.id });
     socket.leave(`interview_${sessionId}`);
     socket.emit('interview:ended', { status: 'success' });
   });

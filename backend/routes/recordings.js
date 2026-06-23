@@ -6,6 +6,7 @@ const InterviewRecording = require('../models/InterviewRecording');
 const InterviewSession = require('../models/InterviewSession');
 const { protect } = require('../middleware/auth');
 const { s3Client, bucketName, getSignedUrl } = require('../services/storageService');
+const logger = require('../utils/logger');
 
 const router = express.Router();
 
@@ -26,8 +27,32 @@ const upload = multer({
 });
 
 /**
- * POST /api/recordings/upload/:sessionId
- * Uploads a video/audio recording for a session.
+ * @swagger
+ * /api/recordings/upload/{sessionId}:
+ *   post:
+ *     summary: Upload an interview recording
+ *     tags: [Interviews]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: sessionId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               recording:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       200:
+ *         description: Recording uploaded successfully
  */
 router.post('/upload/:sessionId', protect, upload.single('recording'), async (req, res) => {
   try {
@@ -58,16 +83,39 @@ router.post('/upload/:sessionId', protect, upload.single('recording'), async (re
     session.recording = recording._id;
     await session.save();
 
+    logger.info({
+      msg: 'Interview recording uploaded',
+      recordingId: recording._id,
+      sessionId,
+      size: req.file.size
+    });
+
     res.json({ success: true, recordingId: recording._id, fileUrl: req.file.location });
   } catch (error) {
-    console.error('Recording Upload Error:', error);
+    logger.error({ msg: 'Recording Upload Error', error, sessionId: req.params.sessionId });
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
 /**
- * GET /api/recordings/:sessionId
- * Serves the recording file for the session via Signed URL redirection.
+ * @swagger
+ * /api/recordings/{sessionId}:
+ *   get:
+ *     summary: Get a signed URL for an interview recording
+ *     tags: [Interviews]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: sessionId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       302:
+ *         description: Redirect to signed S3 URL
+ *       404:
+ *         description: Recording not found
  */
 router.get('/:sessionId', protect, async (req, res) => {
   try {
@@ -88,7 +136,7 @@ router.get('/:sessionId', protect, async (req, res) => {
     // Redirect the client to the S3 URL to stream the media securely
     res.redirect(signedUrl);
   } catch (error) {
-    console.error('Recording Fetch Error:', error);
+    logger.error({ msg: 'Recording Fetch Error', error, sessionId: req.params.sessionId });
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });

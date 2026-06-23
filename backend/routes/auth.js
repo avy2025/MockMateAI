@@ -3,13 +3,46 @@ const { body, validationResult } = require('express-validator');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const { protect } = require('../middleware/auth');
+const logger = require('../utils/logger');
 
 const router = express.Router();
 
 /**
- * @desc    Register user
- * @route   POST /api/auth/register
- * @access  Public
+ * @swagger
+ * tags:
+ *   name: Auth
+ *   description: User authentication and management
+ */
+
+/**
+ * @swagger
+ * /api/auth/register:
+ *   post:
+ *     summary: Register a new user
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *               - email
+ *               - password
+ *             properties:
+ *               name:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *                 minLength: 6
+ *     responses:
+ *       201:
+ *         description: User registered successfully
+ *       400:
+ *         description: Bad request
  */
 router.post(
   '/register',
@@ -42,16 +75,37 @@ router.post(
 
       sendTokenResponse(user, 201, res);
     } catch (err) {
-      console.error(err.message);
+      logger.error(err.message);
       res.status(500).json({ success: false, error: 'Server error' });
     }
   }
 );
 
 /**
- * @desc    Login user
- * @route   POST /api/auth/login
- * @access  Public
+ * @swagger
+ * /api/auth/login:
+ *   post:
+ *     summary: Login a user
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *             properties:
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Login successful
+ *       401:
+ *         description: Invalid credentials
  */
 router.post(
   '/login',
@@ -84,16 +138,25 @@ router.post(
 
       sendTokenResponse(user, 200, res);
     } catch (err) {
-      console.error(err.message);
+      logger.error(err.message);
       res.status(500).json({ success: false, error: 'Server error' });
     }
   }
 );
 
 /**
- * @desc    Get current logged in user
- * @route   GET /api/auth/me
- * @access  Private
+ * @swagger
+ * /api/auth/me:
+ *   get:
+ *     summary: Get current logged in user
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: User data retrieved successfully
+ *       401:
+ *         description: Not authorized
  */
 router.get('/me', protect, async (req, res) => {
   const user = await User.findById(req.user.id);

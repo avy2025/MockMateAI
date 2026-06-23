@@ -5,6 +5,7 @@ const {
   formatResumeContext,
 } = require('../utils/resumeContextRetriever');
 const InterviewSession = require('../models/InterviewSession');
+const logger = require('../utils/logger');
 
 const apiKey = process.env.GEMINI_API_KEY;
 const genAI = new GoogleGenerativeAI(apiKey);
@@ -158,7 +159,7 @@ const generateInterviewResponse = async ({ message, history, interviewType, sess
     const result = await model.generateContent(prompt);
     responseText = result.response.text();
   } catch (apiError) {
-    console.error('Gemini API Error:', apiError.message);
+    logger.error({ msg: 'Gemini API Error', error: apiError, sessionId });
     isFallbackResponse = true;
     responseText = JSON.stringify({
       reply: resumeContextBlock
@@ -178,7 +179,7 @@ const generateInterviewResponse = async ({ message, history, interviewType, sess
     const jsonMatch = responseText.match(/\{[\s\S]*\}/);
     data = JSON.parse(jsonMatch ? jsonMatch[0] : responseText);
   } catch (e) {
-    console.error('JSON Parsing Error:', e, responseText);
+    logger.error({ msg: 'JSON Parsing Error', error: e, responseText, sessionId });
     data = {
       reply: resumeContextBlock
         ? 'Can you walk me through a challenging problem you solved on one of your listed projects?'
@@ -207,7 +208,7 @@ const generateInterviewResponse = async ({ message, history, interviewType, sess
         }
       );
     } catch (dbError) {
-      console.error('Transcript logging error:', dbError);
+      logger.error({ msg: 'Transcript logging error', error: dbError, sessionId });
     }
   }
 

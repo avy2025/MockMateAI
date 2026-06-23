@@ -1,19 +1,48 @@
 const express = require('express');
 const router = express.Router();
 const { protect } = require('../middleware/auth');
-
-/**
- * In-memory behavioral report store.
- * Keys: sessionId  →  value: report object
- *
- * Lightweight — no DB required. Data lives for the process lifetime.
- * Replace with a DB write here when persistence is needed.
- */
+const logger = require('../utils/logger');
 const InterviewSession = require('../models/InterviewSession');
 
 /**
- * POST /api/behavior-report
- * Body: { sessionId, report: { eyeContactScore, attentionStatus, ... , sessionLog } }
+ * @swagger
+ * tags:
+ *   name: Reports
+ *   description: Behavioral and performance reports
+ */
+
+/**
+ * @swagger
+ * /api/behavior-report:
+ *   post:
+ *     summary: Store a behavioral report for a session
+ *     tags: [Reports]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - sessionId
+ *               - report
+ *             properties:
+ *               sessionId:
+ *                 type: string
+ *               report:
+ *                 type: object
+ *                 properties:
+ *                   eyeContactScore:
+ *                     type: number
+ *                   attentionStatus:
+ *                     type: string
+ *     responses:
+ *       200:
+ *         description: Report stored successfully
+ *       400:
+ *         description: Invalid payload
  */
 router.post('/', protect, async (req, res) => {
   try {
@@ -37,20 +66,38 @@ router.post('/', protect, async (req, res) => {
       }
     );
 
-    console.log(
-      `[BehaviorReport] Stored report for session "${sessionId}" — ` +
-      `eyeContactScore=${report.eyeContactScore}, integrityScore=${report.integrityScore ?? 'N/A'}, events=${report.sessionLog?.length ?? 0}`
-    );
+    logger.info({
+      msg: `Stored behavior report for session ${sessionId}`,
+      sessionId,
+      eyeContactScore: report.eyeContactScore,
+      integrityScore: report.integrityScore,
+      eventsCount: report.sessionLog?.length
+    });
 
     return res.json({ ok: true, sessionId });
   } catch (err) {
-    console.error('[BehaviorReport] Error storing report:', err);
+    logger.error({ msg: 'Error storing behavior report', error: err, sessionId: req.body.sessionId });
     return res.status(500).json({ error: 'Internal server error.' });
   }
 });
 
 /**
- * GET /api/behavior-report/:sessionId
+ * @swagger
+ * /api/behavior-report/{sessionId}:
+ *   get:
+ *     summary: Get a behavioral report by session ID
+ *     tags: [Reports]
+ *     parameters:
+ *       - in: path
+ *         name: sessionId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Behavior report data
+ *       404:
+ *         description: Report not found
  */
 router.get('/:sessionId', async (req, res) => {
   const { sessionId } = req.params;
@@ -62,9 +109,9 @@ router.get('/:sessionId', async (req, res) => {
     }
     return res.json(session.behaviorReport);
   } catch (error) {
+    logger.error({ msg: 'Error fetching behavior report', error, sessionId });
     return res.status(500).json({ error: 'Internal server error.' });
   }
 });
-
 
 module.exports = router;

@@ -12,10 +12,18 @@ const {
   generateEmbeddings,
   stripEmbeddingsFromChunks,
 } = require('../services/resumeEmbeddings');
+const logger = require('../utils/logger');
 
 const { protect } = require('../middleware/auth');
 
 const router = express.Router();
+
+/**
+ * @swagger
+ * tags:
+ *   name: Resume Uploads
+ *   description: Resume processing and analysis
+ */
 
 const streamToBuffer = (stream) =>
   new Promise((resolve, reject) => {
@@ -30,7 +38,32 @@ function removeUploadedFile(fileKey) {
   deleteFile(fileKey).catch(() => {});
 }
 
-// POST /api/upload-resume
+/**
+ * @swagger
+ * /api/upload-resume:
+ *   post:
+ *     summary: Upload and process a resume
+ *     tags: [Resume Uploads]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               resume:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       200:
+ *         description: Resume processed successfully
+ *       400:
+ *         description: No file or invalid file type
+ *       422:
+ *         description: Extraction failed
+ */
 router.post('/', protect, resumeUpload.single('resume'), async (req, res) => {
   const fileKey = req.file?.key;
 
@@ -60,7 +93,7 @@ router.post('/', protect, resumeUpload.single('resume'), async (req, res) => {
         });
       }
 
-      console.error('Resume parse error:', parseError);
+      logger.error({ msg: 'Resume parse error', error: parseError, fileKey });
       return res.status(422).json({
         success: false,
         message:
@@ -103,7 +136,12 @@ router.post('/', protect, resumeUpload.single('resume'), async (req, res) => {
     const { getSignedUrl } = require('../services/storageService');
     const signedUrl = await getSignedUrl(req.file.key, 3600);
 
-    // We do NOT remove the file from S3, as instructed to keep it permanently.
+    logger.info({
+      msg: 'Resume uploaded and processed',
+      sessionId,
+      filename: req.file.originalname,
+      userId: req.user.id
+    });
 
     res.json({
       success: true,
@@ -112,13 +150,12 @@ router.post('/', protect, resumeUpload.single('resume'), async (req, res) => {
       sessionId,
       chunks: stripEmbeddingsFromChunks(embeddedChunks),
       insights,
-      // Provide storageKey back to frontend for preview logic if needed (they'll use GetSignedUrl API anyway or we can give one)
       storageKey: req.file.key,
       signedUrl
     });
   } catch (error) {
     removeUploadedFile(fileKey);
-    console.error('Upload Error:', error);
+    logger.error({ msg: 'Upload Error', error, fileKey });
     res.status(500).json({
       success: false,
       message: 'File upload failed.',
@@ -141,6 +178,7 @@ router.use((err, req, res, next) => {
   }
 
   if (err) {
+    logger.error({ msg: 'Multer/Upload Middleware Error', error: err });
     return res.status(400).json({
       success: false,
       message: err.message || 'Upload failed.',

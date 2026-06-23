@@ -4,13 +4,45 @@ const { getResumeSession } = require('../services/resumeSessionStore');
 const ReportGenerator = require('../services/report/ReportGenerator');
 const { saveReport, getReport } = require('../services/report/reportStore');
 const { protect } = require('../middleware/auth');
+const logger = require('../utils/logger');
 
 const apiKey = process.env.GEMINI_API_KEY;
 const generator = new ReportGenerator(apiKey);
 
 /**
- * POST /api/report/generate
- * Generates a report and saves it.
+ * @swagger
+ * /api/report/generate:
+ *   post:
+ *     summary: Generate a final assessment report
+ *     tags: [Reports]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - sessionId
+ *             properties:
+ *               sessionId:
+ *                 type: string
+ *               chatHistory:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *               behaviorReport:
+ *                 type: object
+ *               interviewType:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Report generated successfully
+ *       400:
+ *         description: Session ID missing
+ *       500:
+ *         description: Generation failed
  */
 router.post('/generate', protect, async (req, res) => {
   try {
@@ -37,14 +69,28 @@ router.post('/generate', protect, async (req, res) => {
 
     res.json(finalReport);
   } catch (error) {
-    console.error('Report Generation Error:', error);
+    logger.error({ msg: 'Report Generation Error', error, sessionId: req.body.sessionId });
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
 /**
- * GET /api/report/:sessionId
- * Retrieves a previously generated report.
+ * @swagger
+ * /api/report/{sessionId}:
+ *   get:
+ *     summary: Retrieve a previously generated report
+ *     tags: [Reports]
+ *     parameters:
+ *       - in: path
+ *         name: sessionId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Report data retrieved
+ *       404:
+ *         description: Report not found
  */
 router.get('/:sessionId', async (req, res) => {
   const { sessionId } = req.params;
@@ -56,7 +102,6 @@ router.get('/:sessionId', async (req, res) => {
 
   res.json(report);
 });
-
 
 module.exports = router;
 

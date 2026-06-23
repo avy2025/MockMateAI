@@ -1,6 +1,7 @@
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const knowledgeStore = require('./vectorStore/CandidateKnowledgeStore');
 const { getReport } = require('./report/reportStore');
+const logger = require('../utils/logger');
 
 class CopilotService {
   constructor() {
@@ -79,7 +80,7 @@ class CopilotService {
       return result.response.text();
 
     } catch (error) {
-      console.error('Copilot Service Error:', error);
+      logger.error({ msg: 'Copilot Service Error', error, sessionIds, query });
       throw new Error('Copilot failed to generate a response.');
     }
   }

@@ -3,10 +3,46 @@ const router = express.Router();
 const { getAllReports, getReport } = require('../services/report/reportStore');
 const copilotService = require('../services/CopilotService');
 const { protect, authorize } = require('../middleware/auth');
+const logger = require('../utils/logger');
 
 /**
- * POST /api/recruiter/copilot/chat
- * Handles conversational queries about candidates.
+ * @swagger
+ * tags:
+ *   name: Recruiter
+ *   description: Recruiter dashboard and candidate insights
+ */
+
+/**
+ * @swagger
+ * /api/recruiter/copilot/chat:
+ *   post:
+ *     summary: Chat with AI Copilot about candidates
+ *     tags: [Recruiter]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - sessionIds
+ *               - query
+ *             properties:
+ *               sessionIds:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *               query:
+ *                 type: string
+ *               history:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *     responses:
+ *       200:
+ *         description: Copilot response
  */
 router.post('/copilot/chat', protect, authorize('recruiter', 'admin'), async (req, res) => {
   try {
@@ -28,14 +64,22 @@ router.post('/copilot/chat', protect, authorize('recruiter', 'admin'), async (re
 
     res.json({ response });
   } catch (error) {
-    console.error('Copilot Route Error:', error);
+    logger.error({ msg: 'Copilot Route Error', error, query: req.body.query });
     res.status(500).json({ error: 'AI Copilot is currently unavailable.' });
   }
 });
 
 /**
- * GET /api/recruiter/metrics
- * Returns aggregated statistics for the dashboard.
+ * @swagger
+ * /api/recruiter/metrics:
+ *   get:
+ *     summary: Get dashboard metrics
+ *     tags: [Recruiter]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Aggregated performance metrics
  */
 router.get('/metrics', protect, authorize('recruiter', 'admin'), async (req, res) => {
   try {
@@ -85,15 +129,23 @@ router.get('/metrics', protect, authorize('recruiter', 'admin'), async (req, res
       ]
     });
   } catch (error) {
-    console.error('Error fetching metrics:', error);
+    logger.error({ msg: 'Error fetching metrics', error });
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
 
 /**
- * GET /api/recruiter/candidates
- * Returns a list of all candidates with summary data.
+ * @swagger
+ * /api/recruiter/candidates:
+ *   get:
+ *     summary: Get list of all candidates
+ *     tags: [Recruiter]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of candidates with summary data
  */
 router.get('/candidates', protect, authorize('recruiter', 'admin'), async (req, res) => {
   try {
@@ -111,14 +163,29 @@ router.get('/candidates', protect, authorize('recruiter', 'admin'), async (req, 
     }));
     res.json(candidateList);
   } catch (error) {
-    console.error('Error fetching candidates:', error);
+    logger.error({ msg: 'Error fetching candidates', error });
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
 /**
- * GET /api/recruiter/compare
- * Returns detailed reports for multiple candidates based on sessionId.
+ * @swagger
+ * /api/recruiter/compare:
+ *   get:
+ *     summary: Compare candidate reports
+ *     tags: [Recruiter]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: ids
+ *         description: Comma-separated session IDs
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Data for comparison
  */
 router.get('/compare', protect, authorize('recruiter', 'admin'), async (req, res) => {
   try {
@@ -134,7 +201,7 @@ router.get('/compare', protect, authorize('recruiter', 'admin'), async (req, res
     
     res.json(comparisonData.filter(Boolean));
   } catch (error) {
-    console.error('Error fetching comparison data:', error);
+    logger.error({ msg: 'Error fetching comparison data', error, ids: req.query.ids });
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });

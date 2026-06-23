@@ -1,6 +1,7 @@
 const fs = require('fs/promises');
 const path = require('path');
 const crypto = require('crypto');
+const logger = require('./logger');
 
 class JsonStore {
   constructor(collectionName) {
@@ -27,7 +28,7 @@ class JsonStore {
       }
       this.initialized = true;
     } catch (error) {
-      console.error(`Error initializing JsonStore for ${this.collectionName}:`, error);
+      logger.error({ msg: `Error initializing JsonStore for ${this.collectionName}`, error });
       this.data = [];
     }
   }
