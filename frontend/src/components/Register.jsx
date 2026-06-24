@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { motion } from 'framer-motion';
 
 const Register = () => {
   const [name, setName] = useState('');
@@ -26,156 +27,115 @@ const Register = () => {
   };
 
   return (
-    <div className="auth-container" style={{
+    <div className="auth-wrapper" style={{
       minHeight: '100vh',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      background: '#FFF3E6',
-      color: '#381932',
-      padding: '40px 20px'
+      background: 'var(--background-milk)',
+      padding: '40px 24px'
     }}>
-      <div className="auth-card" style={{
-        background: '#fff',
-        padding: '40px',
-        borderRadius: '24px',
-        boxShadow: '0 20px 50px rgba(56, 25, 50, 0.1)',
-        width: '100%',
-        maxWidth: '450px'
-      }}>
-        <div style={{ textAlign: 'center', marginBottom: '30px' }}>
-          <h1 style={{ fontSize: '2rem', fontWeight: 800, margin: 0 }}>Join MockMate</h1>
-          <p style={{ opacity: 0.7 }}>Create your account to get started</p>
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="glass-card" 
+        style={{
+          padding: '64px 48px',
+          width: '100%',
+          maxWidth: '520px',
+          textAlign: 'center'
+        }}
+      >
+        <div style={{ marginBottom: '40px' }}>
+          <h1 className="display-text" style={{ fontSize: '3rem', marginBottom: '8px' }}>Join MockMate</h1>
+          <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem' }}>The future of interview prep starts here</p>
         </div>
 
         {error && (
-          <div style={{
-            background: '#fee2e2',
-            color: '#991b1b',
-            padding: '12px',
-            borderRadius: '12px',
-            marginBottom: '20px',
-            fontSize: '0.9rem'
-          }}>
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            style={{
+              background: 'rgba(186, 26, 26, 0.1)',
+              color: '#ba1a1a',
+              padding: '16px',
+              borderRadius: '8px',
+              marginBottom: '24px',
+              fontSize: '0.9rem',
+              fontWeight: 500
+            }}
+          >
             {error}
-          </div>
+          </motion.div>
         )}
 
-        <form onSubmit={handleSubmit}>
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600 }}>Full Name</label>
+        <form onSubmit={handleSubmit} style={{ textAlign: 'left' }}>
+          <div style={{ marginBottom: '24px' }}>
+            <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, color: 'var(--accent)' }}>Full Name</label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="John Doe"
               required
-              style={{
-                width: '100%',
-                padding: '14px',
-                borderRadius: '12px',
-                border: '1px solid #ddd',
-                outline: 'none',
-                fontSize: '1rem'
-              }}
             />
           </div>
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600 }}>Email Address</label>
+          <div style={{ marginBottom: '24px' }}>
+            <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, color: 'var(--accent)' }}>Email Address</label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="name@company.com"
+              placeholder="name@example.com"
               required
-              style={{
-                width: '100%',
-                padding: '14px',
-                borderRadius: '12px',
-                border: '1px solid #ddd',
-                outline: 'none',
-                fontSize: '1rem'
-              }}
             />
           </div>
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600 }}>Password</label>
+          <div style={{ marginBottom: '24px' }}>
+            <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, color: 'var(--accent)' }}>Password</label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Min. 6 characters"
               required
-              style={{
-                width: '100%',
-                padding: '14px',
-                borderRadius: '12px',
-                border: '1px solid #ddd',
-                outline: 'none',
-                fontSize: '1rem'
-              }}
             />
           </div>
-          <div style={{ marginBottom: '30px' }}>
-            <label style={{ display: 'block', marginBottom: '12px', fontWeight: 600 }}>I am a...</label>
-            <div style={{ display: 'flex', gap: '10px' }}>
+          
+          <div style={{ marginBottom: '40px' }}>
+            <label style={{ display: 'block', marginBottom: '12px', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, color: 'var(--accent)' }}>Choose Your Role</label>
+            <div style={{ display: 'flex', gap: '12px' }}>
               <button
                 type="button"
                 onClick={() => setRole('candidate')}
-                style={{
-                  flex: 1,
-                  padding: '12px',
-                  borderRadius: '10px',
-                  border: role === 'candidate' ? '2px solid #381932' : '1px solid #ddd',
-                  background: role === 'candidate' ? '#f5f3f5' : '#fff',
-                  fontWeight: 600,
-                  cursor: 'pointer'
-                }}
+                className={`btn ${role === 'candidate' ? 'btn-primary' : 'btn-secondary'}`}
+                style={{ flex: 1, borderRadius: '4px' }}
               >
                 Candidate
               </button>
               <button
                 type="button"
                 onClick={() => setRole('recruiter')}
-                style={{
-                  flex: 1,
-                  padding: '12px',
-                  borderRadius: '10px',
-                  border: role === 'recruiter' ? '2px solid #381932' : '1px solid #ddd',
-                  background: role === 'recruiter' ? '#f5f3f5' : '#fff',
-                  fontWeight: 600,
-                  cursor: 'pointer'
-                }}
+                className={`btn ${role === 'recruiter' ? 'btn-primary' : 'btn-secondary'}`}
+                style={{ flex: 1, borderRadius: '4px' }}
               >
                 Recruiter
               </button>
             </div>
           </div>
+
           <button
             type="submit"
-            style={{
-              width: '100%',
-              padding: '16px',
-              borderRadius: '12px',
-              background: '#381932',
-              color: '#fff',
-              border: 'none',
-              fontWeight: 700,
-              fontSize: '1.1rem',
-              cursor: 'pointer',
-              transition: 'transform 0.2s'
-            }}
-            onMouseOver={(e) => e.target.style.transform = 'scale(1.02)'}
-            onMouseOut={(e) => e.target.style.transform = 'scale(1)'}
+            className="btn btn-primary"
+            style={{ width: '100%', padding: '18px', fontSize: '1.1rem' }}
           >
             Create Account
           </button>
         </form>
 
-        <div style={{ marginTop: '25px', textAlign: 'center', fontSize: '0.9rem' }}>
-          Already have an account? <Link to="/login" style={{ color: '#381932', fontWeight: 700, textDecoration: 'none' }}>Log In</Link>
+        <div style={{ marginTop: '32px', fontSize: '0.95rem', color: 'var(--text-muted)' }}>
+          Already have an account? <Link to="/login" style={{ color: 'var(--primary)', fontWeight: 700, textDecoration: 'none' }}>Sign In</Link>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 };
