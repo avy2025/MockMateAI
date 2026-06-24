@@ -8,52 +8,43 @@ function AIInterviewerPanel({
 }) {
   return (
     <section
-      className={`interview-panel interview-panel--ai ${isActive ? 'interview-panel--active' : ''} ${isSpeaking ? 'interview-panel--speaking' : ''}`}
+      className={`interview-panel interview-panel--ai ${isActive ? 'interview-panel--active' : ''}`}
       aria-label="AI Interviewer"
     >
-      <div className="interview-panel__video-area interview-panel__video-area--ai">
-        <div className={`ai-avatar ${isSpeaking ? 'ai-avatar--speaking' : ''}`} aria-hidden="true">
-          <div className="ai-avatar__ring ai-avatar__ring--outer" />
-          <div className="ai-avatar__ring ai-avatar__ring--inner" />
-          {isSpeaking && <div className="ai-avatar__pulse" />}
-          <div className="ai-avatar__core">
-            <svg viewBox="0 0 64 64" className="ai-avatar__icon">
-              <circle cx="32" cy="24" r="10" fill="currentColor" opacity="0.9" />
-              <path
-                d="M14 52c4-12 36-12 40 0"
-                fill="currentColor"
-                opacity="0.85"
-              />
-              <rect x="22" y="38" width="20" height="8" rx="4" fill="currentColor" opacity="0.5" />
-            </svg>
-          </div>
+      <div className="interview-panel__video-area interview-panel__video-area--ai" style={{ overflow: 'hidden' }}>
+        {/* Synthetic AI Avatar Background */}
+        <div style={{ position: 'absolute', inset: 0, opacity: 0.6 }}>
+           <img src="/images/hero.png" alt="AI Agent" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         </div>
+        
+        {/* Vitality Overlay */}
+        <div style={{ 
+          position: 'absolute', inset: 0, 
+          background: isSpeaking ? 'radial-gradient(circle, rgba(216, 185, 138, 0.1) 0%, transparent 70%)' : 'none',
+          transition: 'all 0.5s ease'
+        }} />
 
         {isSpeaking && (
-          <div className="ai-speaking-badge">
-            <span className="ai-speaking-badge__dot" />
-            Speaking
+          <div className="ai-speaking-badge" style={{ position: 'absolute', top: '24px', right: '24px', zIndex: 10 }}>
+            <span className="ai-speaking-badge__dot" style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--accent)', display: 'inline-block', marginRight: '8px' }} />
+            <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'white', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Speaking</span>
           </div>
         )}
 
         {isLoading && !isSpeaking && (
-          <div className="ai-speaking-badge ai-speaking-badge--thinking">
-            <span className="ai-speaking-badge__dot" />
-            Thinking…
+          <div className="ai-speaking-badge" style={{ position: 'absolute', top: '24px', right: '24px', zIndex: 10, background: 'rgba(255,255,255,0.05)' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Processing Intent...</span>
           </div>
         )}
-
-        {currentQuestion && !isSpeaking && !isLoading && (
-          <p className="interview-panel__question-preview">
-            {currentQuestion.length > 120
-              ? `${currentQuestion.slice(0, 120)}…`
-              : currentQuestion}
-          </p>
-        )}
       </div>
+      
       <footer className="interview-panel__label">
-        <span className="interview-panel__label-badge">AI</span>
-        AI Interviewer
+        <span className="interview-panel__label-text">INTEL-AGENT-OX1</span>
+        <div style={{ display: 'flex', gap: '4px' }}>
+          {[1, 2, 3].map(i => (
+            <div key={i} style={{ width: '12px', height: '2px', background: isSpeaking ? 'var(--accent)' : 'rgba(255,255,255,0.2)' }} />
+          ))}
+        </div>
       </footer>
     </section>
   );

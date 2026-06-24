@@ -20,22 +20,17 @@ function CandidatePanel({
         {isLoading && (
           <div className="interview-panel__overlay">
             <div className="interview-panel__spinner" aria-hidden="true" />
-            <p>Starting camera…</p>
+            <p className="display-text" style={{ fontSize: '0.8rem', marginTop: '12px' }}>CALIBRATING OPTICS...</p>
           </div>
         )}
 
         {error && (
           <div className="interview-panel__overlay interview-panel__overlay--error">
-            <svg viewBox="0 0 24 24" className="interview-panel__error-icon" aria-hidden="true">
-              <path
-                fill="currentColor"
-                d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm1 14h-2v-2h2v2Zm0-8h-2v6h2V8Z"
-              />
-            </svg>
+             <div style={{ fontSize: '2rem' }}>⚠️</div>
             <p>{error}</p>
             {onRetry && (
-              <button type="button" className="interview-panel__retry-btn" onClick={onRetry}>
-                Try again
+              <button type="button" className="btn btn-primary" onClick={onRetry} style={{ marginTop: '16px' }}>
+                Retry Configuration
               </button>
             )}
           </div>
@@ -43,13 +38,8 @@ function CandidatePanel({
 
         {!cameraOn && status === 'active' && !error && (
           <div className="interview-panel__overlay">
-            <svg viewBox="0 0 24 24" className="interview-panel__off-icon" aria-hidden="true">
-              <path
-                fill="currentColor"
-                d="M17 10.5V7a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h2.1l-1.3 1.3a1 1 0 1 0 1.4 1.4l3.6-3.6a1 1 0 0 0 0-1.4L7.2 10.4a1 1 0 1 0-1.4 1.4L7.1 13H5V8h10v2.5a1 1 0 1 0 2 0Zm4.3-1.8-6.4 6.4a1 1 0 0 1-1.4 0l-2.1-2.1a1 1 0 0 1 1.4-1.4l1.4 1.4 5.7-5.7a1 1 0 0 1 1.4 1.4Z"
-              />
-            </svg>
-            <p>Camera is off</p>
+             <div style={{ fontSize: '2rem', opacity: 0.5 }}>📵</div>
+            <p className="display-text" style={{ fontSize: '0.8rem', marginTop: '12px', opacity: 0.5 }}>SENSOR OFFLINE</p>
           </div>
         )}
 
@@ -63,17 +53,19 @@ function CandidatePanel({
         />
 
         {isListening && (
-          <div className="candidate-listening-badge" aria-hidden="true">
-            <span className="candidate-listening-badge__dot" />
-            Listening
+          <div className="candidate-listening-badge" style={{ position: 'absolute', top: '24px', left: '24px', zIndex: 10 }}>
+            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#6ee7a0', display: 'inline-block', marginRight: '8px', boxShadow: '0 0 10px #6ee7a0' }} />
+            <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'white', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Voice Active</span>
           </div>
         )}
       </div>
       <footer className="interview-panel__label">
-        <span className="interview-panel__label-badge interview-panel__label-badge--you">
-          You
-        </span>
-        Candidate
+        <span className="interview-panel__label-text">YOUR FEED</span>
+        <div style={{ display: 'flex', gap: '4px' }}>
+          {[1, 2, 3].map(i => (
+            <div key={i} style={{ width: '12px', height: '2px', background: 'rgba(255,255,255,0.2)' }} />
+          ))}
+        </div>
       </footer>
     </section>
   );
