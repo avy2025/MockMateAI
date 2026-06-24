@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getRoles, generateInterviewPlan } from '../services/chatApi';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const RoleSelection = ({ sessionId, onPlanGenerated, onBack }) => {
   const [roles, setRoles] = useState([]);
@@ -22,20 +23,14 @@ const RoleSelection = ({ sessionId, onPlanGenerated, onBack }) => {
     fetchRoles();
   }, []);
 
-  const handleRoleSelect = (roleId) => {
-    setSelectedRoleId(roleId);
-  };
-
   const handleContinue = async () => {
     if (!selectedRoleId) return;
-    
     setIsGenerating(true);
     try {
       const response = await generateInterviewPlan({ sessionId, roleId: selectedRoleId });
       onPlanGenerated(response.plan);
     } catch (error) {
-      console.error('Failed to generate interview plan:', error);
-      alert('Failed to generate interview plan. Please try again.');
+      alert('Failed to generate interview plan.');
     } finally {
       setIsGenerating(false);
     }
@@ -48,230 +43,108 @@ const RoleSelection = ({ sessionId, onPlanGenerated, onBack }) => {
 
   if (loading) {
     return (
-      <div style={containerStyle}>
-        <div className="spinner" style={spinnerStyle}></div>
-        <p>Loading available roles...</p>
+      <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'var(--background-milk)' }}>
+        <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }} style={{ width: '48px', height: '48px', border: '4px solid var(--glass-border)', borderTopColor: 'var(--primary)', borderRadius: '50%' }} />
+        <p className="display-text" style={{ marginTop: '24px' }}>Loading Protocols</p>
       </div>
     );
   }
 
   return (
-    <div style={containerStyle}>
-      <header style={headerStyle}>
-        <h1 style={titleStyle}>Target Your Career</h1>
-        <p style={subtitleStyle}>Select the role you're interviewing for to tailor the Experience.</p>
-        
-        <div style={searchContainerStyle}>
-          <input 
-            type="text" 
-            placeholder="Search roles (e.g. Frontend, Data Analyst...)" 
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            style={searchInputStyle}
-          />
-        </div>
-      </header>
-
-      <div style={gridStyle}>
-        {filteredRoles.map(role => (
-          <div 
-            key={role.id} 
-            onClick={() => handleRoleSelect(role.id)}
-            style={{
-              ...cardStyle,
-              borderColor: selectedRoleId === role.id ? '#381932' : 'transparent',
-              boxShadow: selectedRoleId === role.id ? '0 10px 30px rgba(56, 25, 50, 0.15)' : '0 4px 12px rgba(0,0,0,0.05)',
-              transform: selectedRoleId === role.id ? 'translateY(-5px)' : 'none'
-            }}
-          >
-            <div style={cardHeaderStyle}>
-              <h3 style={cardTitleStyle}>{role.name}</h3>
-              {selectedRoleId === role.id && <span style={badgeStyle}>Selected</span>}
-            </div>
-            <p style={cardDescriptionStyle}>{role.description}</p>
-            <div style={tagContainerStyle}>
-              {role.focusAreas.slice(0, 3).map(area => (
-                <span key={area} style={tagStyle}>{area}</span>
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <footer style={footerStyle}>
-        <button onClick={onBack} style={backButtonStyle}>Back</button>
+    <div style={{ minHeight: '100vh', backgroundColor: 'var(--background-milk)', padding: '120px 48px 48px' }}>
+      <header className="nav-container">
+        <button onClick={onBack} className="btn btn-ghost">← Back</button>
+        <div className="display-text" style={{ fontSize: '1.5rem' }}>MOCKMATE AI</div>
         <button 
           onClick={handleContinue} 
           disabled={!selectedRoleId || isGenerating}
-          style={{
-            ...continueButtonStyle,
-            opacity: (!selectedRoleId || isGenerating) ? 0.6 : 1,
-            cursor: (!selectedRoleId || isGenerating) ? 'not-allowed' : 'pointer'
-          }}
+          className="btn btn-primary"
+          style={{ borderRadius: '4px', opacity: isGenerating ? 0.7 : 1 }}
         >
-          {isGenerating ? 'Analyzing Requirements...' : 'Continue to Interview'}
+          {isGenerating ? 'Configuring Session...' : 'Launch Session →'}
         </button>
-      </footer>
+      </header>
 
-      <style>{`
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-      `}</style>
+      <main className="container">
+        <div style={{ textAlign: 'center', marginBottom: '64px' }}>
+          <span className="display-text" style={{ color: 'var(--accent)', fontSize: '0.9rem', display: 'block', marginBottom: '12px' }}>STEP 02 OF 02</span>
+          <h1 className="display-text" style={{ fontSize: '4rem', marginBottom: '16px' }}>Target Your Purpose</h1>
+          <p style={{ color: 'var(--text-muted)', fontSize: '1.25rem', maxWidth: '600px', margin: '0 auto' }}>
+            Select your target role. Our AI will calibrate its logic to match the specific demands of this position.
+          </p>
+          
+          <div style={{ maxWidth: '600px', margin: '40px auto 0' }}>
+            <input 
+              type="text" 
+              placeholder="Filter roles (e.g. Lead Engineer, Product...)" 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="glass-card"
+              style={{ padding: '16px 24px', borderRadius: '12px', fontSize: '1.1rem' }}
+            />
+          </div>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '24px' }}>
+          {filteredRoles.map((role, index) => (
+            <motion.div 
+              key={role.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.05 }}
+              onClick={() => setSelectedRoleId(role.id)}
+              className="glass-card"
+              style={{
+                padding: '32px',
+                cursor: 'pointer',
+                border: selectedRoleId === role.id ? '2px solid var(--primary)' : '1px solid var(--glass-border)',
+                transform: selectedRoleId === role.id ? 'translateY(-4px)' : 'none',
+                boxShadow: selectedRoleId === role.id ? 'var(--glow-hover)' : 'var(--soft-glow)',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between'
+              }}
+            >
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
+                  <h3 className="display-text" style={{ fontSize: '1.5rem', margin: 0 }}>{role.name}</h3>
+                  {selectedRoleId === role.id && <span style={{ backgroundColor: 'var(--primary)', color: 'white', padding: '4px 12px', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 600 }}>SELECTED</span>}
+                </div>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', marginBottom: '24px', lineHeight: '1.6' }}>{role.description}</p>
+              </div>
+              
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                {role.focusAreas.slice(0, 3).map(area => (
+                  <span key={area} style={{ backgroundColor: 'rgba(56, 25, 50, 0.05)', color: 'var(--primary)', padding: '4px 10px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 600 }}>{area.toUpperCase()}</span>
+                ))}
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </main>
+
+      <AnimatePresence>
+        {isGenerating && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(255,243,230,0.9)', zIndex: 2000, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}
+          >
+            <motion.div 
+              animate={{ scale: [1, 1.1, 1], opacity: [0.5, 1, 0.5] }}
+              transition={{ duration: 2, repeat: Infinity }}
+              style={{ fontSize: '5rem', marginBottom: '32px' }}
+            >
+              🎯
+            </motion.div>
+            <h2 className="display-text" style={{ fontSize: '2.5rem' }}>Constructing Interview Matrix</h2>
+            <p style={{ color: 'var(--text-muted)' }}>Calibrating behavioral checks and technical thresholds...</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
-};
-
-// Styles
-const containerStyle = {
-  maxWidth: '1200px',
-  margin: '0 auto',
-  padding: '60px 20px',
-  minHeight: '100vh',
-  backgroundColor: '#FFF3E6',
-  color: '#381932',
-  display: 'flex',
-  flexDirection: 'column',
-  fontFamily: '"Outfit", "Inter", sans-serif'
-};
-
-const headerStyle = {
-  textAlign: 'center',
-  marginBottom: '50px'
-};
-
-const titleStyle = {
-  fontSize: '3rem',
-  fontWeight: 900,
-  marginBottom: '10px',
-  letterSpacing: '-1px'
-};
-
-const subtitleStyle = {
-  fontSize: '1.2rem',
-  opacity: 0.8,
-  marginBottom: '30px'
-};
-
-const searchContainerStyle = {
-  maxWidth: '600px',
-  margin: '0 auto',
-  position: 'relative'
-};
-
-const searchInputStyle = {
-  width: '100%',
-  padding: '16px 24px',
-  borderRadius: '12px',
-  border: '2px solid rgba(56, 25, 50, 0.1)',
-  backgroundColor: '#fff',
-  fontSize: '1.1rem',
-  outline: 'none',
-  transition: 'border-color 0.3s ease',
-  color: '#381932'
-};
-
-const gridStyle = {
-  display: 'grid',
-  gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
-  gap: '30px',
-  marginBottom: '60px'
-};
-
-const cardStyle = {
-  backgroundColor: '#fff',
-  padding: '30px',
-  borderRadius: '24px',
-  cursor: 'pointer',
-  transition: 'all 0.3s cubic-bezier(0.23, 1, 0.32, 1)',
-  border: '3px solid transparent',
-  display: 'flex',
-  flexDirection: 'column',
-  justifyContent: 'space-between'
-};
-
-const cardHeaderStyle = {
-  display: 'flex',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-  marginBottom: '15px'
-};
-
-const cardTitleStyle = {
-  fontSize: '1.4rem',
-  fontWeight: 800,
-  margin: 0
-};
-
-const badgeStyle = {
-  backgroundColor: '#381932',
-  color: '#FFF3E6',
-  padding: '4px 12px',
-  borderRadius: '20px',
-  fontSize: '0.8rem',
-  fontWeight: 600
-};
-
-const cardDescriptionStyle = {
-  fontSize: '1rem',
-  lineHeight: '1.6',
-  opacity: 0.8,
-  marginBottom: '20px'
-};
-
-const tagContainerStyle = {
-  display: 'flex',
-  flexWrap: 'wrap',
-  gap: '8px'
-};
-
-const tagStyle = {
-  backgroundColor: '#f8f0ec',
-  padding: '4px 10px',
-  borderRadius: '6px',
-  fontSize: '0.85rem',
-  color: '#381932',
-  fontWeight: 500
-};
-
-const footerStyle = {
-  display: 'flex',
-  justifyContent: 'center',
-  gap: '20px',
-  marginTop: 'auto',
-  paddingTop: '40px'
-};
-
-const backButtonStyle = {
-  padding: '16px 40px',
-  borderRadius: '12px',
-  border: '2px solid #381932',
-  backgroundColor: 'transparent',
-  color: '#381932',
-  fontSize: '1.1rem',
-  fontWeight: 700,
-  cursor: 'pointer',
-  transition: 'all 0.3s'
-};
-
-const continueButtonStyle = {
-  padding: '18px 60px',
-  borderRadius: '12px',
-  border: 'none',
-  backgroundColor: '#381932',
-  color: '#FFF3E6',
-  fontSize: '1.1rem',
-  fontWeight: 700,
-  boxShadow: '0 10px 20px rgba(56, 25, 50, 0.2)',
-  transition: 'all 0.3s'
-};
-
-const spinnerStyle = {
-  width: '50px',
-  height: '50px',
-  border: '5px solid rgba(56, 25, 50, 0.1)',
-  borderTop: '5px solid #381932',
-  borderRadius: '50%',
-  animation: 'spin 1s linear infinite',
-  marginBottom: '20px'
 };
 
 export default RoleSelection;
