@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, useNavigate, useParams } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import Home from './components/Home';
 import ResumeUpload from './components/ResumeUpload';
 import RoleSelection from './components/RoleSelection';
@@ -159,21 +160,25 @@ function LoadingScreen() {
       flexDirection: 'column', 
       alignItems: 'center', 
       justifyContent: 'center',
-      background: '#FFF3E6',
-      color: '#381932',
-      gap: '20px'
+      background: 'var(--background-milk)',
+      color: 'var(--primary)',
+      gap: '32px'
     }}>
-      <div className="spinner" style={{ 
-        width: '60px', 
-        height: '60px', 
-        border: '6px solid rgba(56, 25, 50, 0.1)', 
-        borderTop: '6px solid #381932', 
-        borderRadius: '50%',
-        animation: 'spin 1s linear infinite'
-      }}></div>
-      <h2 style={{ fontWeight: 800, fontSize: '2rem' }}>Generating Intelligence Report...</h2>
-      <p style={{ opacity: 0.8 }}>Aggregating session metrics and AI assessments</p>
-      <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
+      <motion.div 
+        animate={{ rotate: 360 }} 
+        transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }} 
+        style={{ 
+          width: '80px', 
+          height: '80px', 
+          border: '8px solid rgba(56, 25, 50, 0.05)', 
+          borderTop: '8px solid var(--primary)', 
+          borderRadius: '50%'
+        }} 
+      />
+      <div style={{ textAlign: 'center' }}>
+        <h2 className="display-text" style={{ fontSize: '2.5rem', marginBottom: '8px' }}>Refining Intelligence</h2>
+        <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem' }}>Aggregating behavioral signals and session metrics...</p>
+      </div>
     </div>
   );
 }
