@@ -10,6 +10,7 @@
   --surface-variant: #e9e0e3;
   --on-surface: #1e1b1d;
   --on-surface-variant: #4e444a;
+  --text-muted: #4e444a; /* alias for on-surface-variant */
   
   /* Glassmorphism & Effects */
   --glass-bg: rgba(255, 255, 255, 0.4);
@@ -43,6 +44,7 @@ body {
   color: var(--on-surface);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
 }
 
 h1, h2, h3, h4, .display-text {
