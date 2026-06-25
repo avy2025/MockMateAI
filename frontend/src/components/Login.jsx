@@ -25,14 +25,26 @@ const Login = () => {
   };
 
   return (
-    <div className="auth-wrapper" style={{
-      height: '100vh',
+    <div style={{
+      minHeight: '100vh',
       display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
+      flexDirection: 'column',
       background: 'var(--background-milk)',
-      padding: '24px'
     }}>
+      {/* Simple top bar */}
+      <div style={{ padding: '20px 48px', borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
+        <Link to="/" style={{ fontFamily: 'var(--font-display)', fontSize: '1.6rem', color: 'var(--primary)', textDecoration: 'none', letterSpacing: '0.05em' }}>
+          MOCKMATE AI
+        </Link>
+      </div>
+
+      <div style={{
+        flex: 1,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '60px 24px',
+      }}>
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -101,6 +113,7 @@ const Login = () => {
           New to MockMate? <Link to="/register" style={{ color: 'var(--primary)', fontWeight: 700, textDecoration: 'none' }}>Create an account</Link>
         </div>
       </motion.div>
+      </div>
     </div>
   );
 };
