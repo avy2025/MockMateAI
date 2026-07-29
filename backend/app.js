@@ -26,7 +26,7 @@ const app = express();
 // Middleware
 app.use(express.json());
 app.use(cors());
-app.use(helmet()); // Set security headers
+app.use(helmet({ crossOriginResourcePolicy: false })); // Set security headers
 
 // Structured Logging
 app.use(pinoHttp({ 
